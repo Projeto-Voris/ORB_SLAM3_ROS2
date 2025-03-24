@@ -41,7 +41,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'child_frame_id',
             default_value=['left_camera_link']
-        )
+        ),
 
         Node(
             package='orbslam3_ros2',
@@ -63,19 +63,9 @@ def generate_launch_description():
             remappings=[
                 ('camera/left', '/stereo_left'),
                 ('camera/right', '/stereo_right')
-            ]
+            ],
             parameters = [{'frame_id':LaunchConfiguration('frame_id'), 'child_frame_id':LaunchConfiguration('child_frame_id')}]
         ),
-        # ExecuteProcess(
-        #     cmd=['/opt/ros/humble/lib/tf2_ros/static_transform_publisher',
-        #          '--yaw', '-1.570796327',
-        #          '--roll', '-1.5707963270',
-        #          '--pitch', '0',
-        #          '--frame-id', 'orbslam3',
-        #          '--child-frame-id', 'left_camera'],
-        #     output='screen',
-        # ),
-
         ExecuteProcess(
             cmd=['/opt/ros/humble/lib/tf2_ros/static_transform_publisher',
                     # '--yaw', '-1.570796327',
@@ -97,16 +87,4 @@ def generate_launch_description():
             )],
             period='1'
         )
-
-
-    
-        # ExecuteProcess(
-        #     cmd=['/opt/ros/humble/lib/tf2_ros/static_transform_publisher',
-        #          '--yaw', '-1.570796327',
-        #          '--roll', '-1.5707963270',
-        #          '--pitch', '0',
-        #          '--frame-id', 'map',
-        #          '--child-frame-id', 'down'],
-        #     output='screen',
-        # )
     ])
