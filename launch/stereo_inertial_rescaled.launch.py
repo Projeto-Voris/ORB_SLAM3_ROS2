@@ -41,8 +41,8 @@ def generate_launch_description():
                 'False'
             ],
             remappings=[
-                ('camera/left', '/SM2/left/image_rescaled'),
-                ('camera/right', '/SM2/right/image_rescaled'),
+                ('camera/left', '/SM2/left/image_raw'),
+                ('camera/right', '/SM2/right/image_raw'),
                 ('/imu' , '/SM2/imu/data_raw')  
             ]
         )
