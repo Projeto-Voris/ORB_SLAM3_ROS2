@@ -37,7 +37,7 @@ def generate_launch_description():
                     'stereo-inertial',
                     LaunchConfiguration('yaml_file')
                 ]),
-                'False'
+                'True'
                 'False'
             ],
             remappings=[

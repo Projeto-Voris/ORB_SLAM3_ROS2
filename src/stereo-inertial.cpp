@@ -175,7 +175,7 @@ cv::Mat StereoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 
 void StereoInertialNode::SyncWithImu()
 {
-    const double maxTimeDiff = 0.01;
+    const double maxTimeDiff = 0.05;
 
     while (1)
     {
@@ -252,8 +252,8 @@ void StereoInertialNode::SyncWithImu()
             SE3 = m_SLAM->TrackStereo(imLeft, imRight, tImLeft, vImuMeas);
             
             Update();
-            std::chrono::milliseconds tSleep(1);
-            std::this_thread::sleep_for(tSleep);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
 

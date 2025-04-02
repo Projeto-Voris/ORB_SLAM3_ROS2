@@ -42,10 +42,10 @@ Camera2.p1: -0.0005
 Camera2.p2: -0.0001
 
 # Camera resolution
-Camera.width: 600
-Camera.height: 800
+Camera.width: 1600
+Camera.height: 1200
 
-Camera.fps: 20
+Camera.fps: 40
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1

@@ -47,7 +47,7 @@ Camera2.p2: -0.000073449
 Camera.width: 800
 Camera.height: 600
 
-Camera.fps: 20
+Camera.fps: 40
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
