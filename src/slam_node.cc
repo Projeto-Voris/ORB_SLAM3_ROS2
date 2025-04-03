@@ -77,7 +77,7 @@ void SlamNode::PublishTrackedPointCloud(){
     }
     
     pointcloudmsg.header.stamp = current_frame_time_;
-    pointcloudmsg.header.frame_id = "down";
+    pointcloudmsg.header.frame_id = "orbslam3";
     pointcloudmsg.height = 1;
     pointcloudmsg.width = count;
     pointcloudmsg.is_dense = true;
