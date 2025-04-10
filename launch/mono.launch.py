@@ -33,7 +33,8 @@ def generate_launch_description():
                     'config',  # Assuming your config files are in the config directory
                     'monocular',
                     LaunchConfiguration('yaml_file')  # Use the file name directly
-                ])
+                ]),
+                
             ],
             remappings=[
                 ('camera', '/SM2/left/image_raw')

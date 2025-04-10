@@ -30,6 +30,11 @@ def generate_launch_description():
             default_value='SM2',
             description='Namespace of system'
         ),
+        DeclareLaunchArgument(
+            'rescale',
+            default_value=False,
+            description='Rescale Image'
+        ),
         
         Node(
             package='orbslam3_ros2',
@@ -45,9 +50,10 @@ def generate_launch_description():
                     'stereo',
                     LaunchConfiguration('yaml_file')
                 ]),
-                'False',
+                'True',
                 LaunchConfiguration('pangolin')
             ],
+            parameters=[{'rescale': LaunchConfiguration('rescale')}],
             remappings=[
                 ('camera/left', 'left/image_raw'),
                 ('camera/right', 'right/image_raw')

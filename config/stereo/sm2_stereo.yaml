@@ -19,34 +19,39 @@ File.version: "1.0"
 
 Camera.type: "PinHole"
 
-# Camera calibration and distortion parameters (OpenCV)
-Camera1.fx: 813.320785412071
-Camera1.fy: 812.377372559901
-Camera1.cx: 778.186892263227
-Camera1.cy: 605.957356038235
+# Left Camera calibration and distortion parameters (OpenCV)
+Camera1.fx: 809.5590
+Camera1.fy: 809.4373
+Camera1.cx: 779.8459
+Camera1.cy: 595.5954
 
-Camera1.k1: -0.055533519098831
-Camera1.k2: 0.115958845155455
-Camera1.k3: -0.0591094716284816
-Camera1.p1: 0.00139193285805994
-Camera1.p2: -0.000797157300454347
+Camera1.k1: -0.0395
+Camera1.k2: 0.0827
+Camera1.p1: -0.0006
+Camera1.p2: 0.0001
 
-Camera2.fx: 809.10224603905
-Camera2.fy: 808.143436415958
-Camera2.cx: 777.789010225302
-Camera2.cy: 603.602200967784
+# Right Camera calibration and distortion parameters (OpenCV)
+Camera2.fx: 805.3451
+Camera2.fy: 805.2451
+Camera2.cx: 781.8989
+Camera2.cy: 598.6680
 
-Camera2.k1: -0.0568693624596296
-Camera2.k2: 0.119328122280291
-Camera2.k3: -0.060783202207704
-Camera2.p1: 0.000854645771264873
-Camera2.p2: -0.00108747593012749
+Camera2.k1: -0.0466
+Camera2.k2: 0.1005
+Camera2.p1: -0.0005
+Camera2.p2: -0.0001
 
+# Camera resolution
 Camera.width: 1600
 Camera.height: 1200
 
-# Camera frames per second
-Camera.fps: 60
+Camera.fps: 40
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Baseline times focal length (bf = baseline * fx)
+Camera.bf: 48.0  # Ajuste este valor com base na baseline do seu sistema estéreo
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
@@ -56,11 +61,11 @@ Stereo.T_c1_c2: !!opencv-matrix
   rows: 4
   cols: 4
   dt: f
-  data: [0.999977189801322, -0.00671759640256037, -0.000702691699198892, -0.0991708350870718,
-         0.00672737277926011, 0.999865102452017, 0.0149839699047451, 0.000186145434065666,
-         0.000601940645483526, -0.014988355386424, 0.999887487105559, 0.00019364445806762,
+  data: [0.9999, 0.0098, -0.0046, -0.1998684,
+         -0.0098, 0.9999, 0.0043, 0.0007489,
+         0.0047, -0.0043, 1.0000, -0.0011766,
          0.0, 0.0, 0.0, 1.0]
-
+         # Transformation from camera to IMU
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------

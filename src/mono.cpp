@@ -19,8 +19,8 @@ int main(int argc, char **argv)
         std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings" << std::endl;
         return 1;
     }
-    auto node = std::make_shared<rclcpp::Node>("run_slam");
     rclcpp::init(argc, argv);
+    auto node = std::make_shared<rclcpp::Node>("run_slam");
 
     // malloc error using new.. try shared ptr
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -57,7 +57,8 @@ void MonocularSlamNode::GrabImage(const ImageMsg::SharedPtr msg)
     // Copy the ros image message to cv::Mat.
     try
     {
-        m_cvImPtr = cv_bridge::toCvCopy(msg);
+        img_cam = cv_bridge::toCvShare(msg, msg->encoding)->image;
+        cv::resize(img_cam, img_cam, cv::Size(1600, 1200), cv::INTER_LINEAR);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -66,6 +67,6 @@ void MonocularSlamNode::GrabImage(const ImageMsg::SharedPtr msg)
     }
 
     std::cout<<"one frame has been sent"<<std::endl;
-    SE3 = m_SLAM->TrackMonocular(m_cvImPtr->image, Utility::StampToSec(msg->header.stamp));
-    Update();
+    SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
+    // Update();
 }

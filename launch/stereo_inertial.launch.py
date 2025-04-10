@@ -17,14 +17,16 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='stereo-inertial.yaml',
+            default_value='stereo-inertial-rescaled.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
+                DeclareLaunchArgument('namespace', default_value='SM2', description='namespace of node'),
         
         Node(
             package='orbslam3_ros2',
             executable='stereo-inertial',
             name='stereo_inertial_orbslam3',
+            namespace=LaunchConfiguration('namespace'),
             output='screen',
             arguments=[
                 LaunchConfiguration('vocabulary'),
@@ -40,7 +42,7 @@ def generate_launch_description():
             remappings=[
                 ('camera/left', '/SM2/left/image_raw'),
                 ('camera/right', '/SM2/right/image_raw'),
-                ('/imu' , '/imu/data_raw')  
+                ('/imu' , '/SM2/imu/data_raw')  
             ]
         )
     ])

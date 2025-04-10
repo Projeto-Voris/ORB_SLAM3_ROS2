@@ -45,6 +45,7 @@ StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* n
 {
     stringstream ss_rec(strDoRectify);
     ss_rec >> boolalpha >> doRectify_;
+    // doRectify_ = 1;
 
     stringstream ss_eq(strDoEqual);
     ss_eq >> boolalpha >> doEqual_;
@@ -53,49 +54,11 @@ StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* n
     std::cout << "Rectify: " << doRectify_ << std::endl;
     std::cout << "Equal: " << doEqual_ << std::endl;
 
-    if (doRectify_)
-    {
-        // Load settings related to stereo calibration
-        cv::FileStorage fsSettings(strSettingsFile, cv::FileStorage::READ);
-        if (!fsSettings.isOpened())
-        {
-            cerr << "ERROR: Wrong path to settings" << endl;
-            assert(0);
-        }
+    
 
-        cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-        fsSettings["LEFT.K"] >> K_l;
-        fsSettings["RIGHT.K"] >> K_r;
-
-        fsSettings["LEFT.P"] >> P_l;
-        fsSettings["RIGHT.P"] >> P_r;
-
-        fsSettings["LEFT.R"] >> R_l;
-        fsSettings["RIGHT.R"] >> R_r;
-
-        fsSettings["LEFT.D"] >> D_l;
-        fsSettings["RIGHT.D"] >> D_r;
-
-        int rows_l = fsSettings["LEFT.height"];
-        int cols_l = fsSettings["LEFT.width"];
-        int rows_r = fsSettings["RIGHT.height"];
-        int cols_r = fsSettings["RIGHT.width"];
-
-        if (K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
-            rows_l == 0 || rows_r == 0 || cols_l == 0 || cols_r == 0)
-        {
-            cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
-            assert(0);
-        }
-
-        cv::initUndistortRectifyMap(K_l, D_l, R_l, P_l.rowRange(0, 3).colRange(0, 3), cv::Size(cols_l, rows_l), CV_32F, M1l_, M2l_);
-        cv::initUndistortRectifyMap(K_r, D_r, R_r, P_r.rowRange(0, 3).colRange(0, 3), cv::Size(cols_r, rows_r), CV_32F, M1r_, M2r_);
-    }
-
-
-    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu", 1000, std::bind(&StereoInertialNode::GrabImu, this, _1));
-    subImgLeft_ = this->create_subscription<sensor_msgs::msg::Image>("camera/left", 100, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
-    subImgRight_ = this->create_subscription<sensor_msgs::msg::Image>("camera/right", 100, std::bind(&StereoInertialNode::GrabImageRight, this, _1));
+    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu", 100, std::bind(&StereoInertialNode::GrabImu, this, _1));
+    subImgLeft_ = this->create_subscription<sensor_msgs::msg::Image>("camera/left", 10, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
+    subImgRight_ = this->create_subscription<sensor_msgs::msg::Image>("camera/right", 10, std::bind(&StereoInertialNode::GrabImageRight, this, _1));
     
     tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
@@ -152,10 +115,12 @@ void StereoInertialNode::GrabImageRight(const ImageMsg::SharedPtr msgRight)
 cv::Mat StereoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 {
     cv_bridge::CvImageConstPtr cv_ptr;
+    cv::Mat resized_img;
 
     try
     {
         cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+        cv::resize(cv_ptr->image, resized_img, cv::Size(800, 600), cv::INTER_LINEAR);
     }
     catch (cv_bridge::Exception &e)
     {
@@ -164,18 +129,18 @@ cv::Mat StereoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 
     if (cv_ptr->image.type() == 0)
     {
-        return cv_ptr->image.clone();
+        return resized_img;
     }
     else
     {
         std::cerr << "Error image type" << std::endl;
-        return cv_ptr->image.clone();
+        return resized_img;
     }
 }
 
 void StereoInertialNode::SyncWithImu()
 {
-    const double maxTimeDiff = 0.01;
+    const double maxTimeDiff = 0.05;
 
     while (1)
     {
@@ -205,7 +170,8 @@ void StereoInertialNode::SyncWithImu()
 
             if ((tImLeft - tImRight) > maxTimeDiff || (tImRight - tImLeft) > maxTimeDiff)
             {
-                std::cout << "big time difference" << std::endl;
+                // std::cout << "big time difference" << std::endl;
+                RCLCPP_WARN(this->get_logger(), "dt dif: %f", std::min(abs(tImLeft - tImRight), abs(tImRight - tImLeft)));
                 continue;
             }
             if (tImLeft > Utility::StampToSec(imuBuf_.back()->header.stamp))
@@ -252,8 +218,8 @@ void StereoInertialNode::SyncWithImu()
             SE3 = m_SLAM->TrackStereo(imLeft, imRight, tImLeft, vImuMeas);
             
             Update();
-            std::chrono::milliseconds tSleep(1);
-            std::this_thread::sleep_for(tSleep);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
 
