@@ -46,10 +46,11 @@ private:
     void GrabStereo(const ImageMsg::SharedPtr msgLeft, const ImageMsg::SharedPtr msgRight);
 
     bool doRectify;
+    bool rescale;
     cv::Mat M1l, M2l, M1r, M2r;
 
-    cv_bridge::CvImageConstPtr cv_ptrLeft;
-    cv_bridge::CvImageConstPtr cv_ptrRight;
+    cv::Mat imLeft;
+    cv::Mat imRight;
 
     std::shared_ptr<message_filters::Subscriber<ImageMsg>> left_sub;
     std::shared_ptr<message_filters::Subscriber<ImageMsg>> right_sub;

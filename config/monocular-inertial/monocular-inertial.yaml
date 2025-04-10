@@ -31,18 +31,6 @@ Camera1.k3: -0.0369
 Camera1.p1: -0.00059037
 Camera1.p2: 0.00000079374
 
-# Right Camera calibration and distortion parameters (OpenCV)
-Camera2.fx: 402.5362
-Camera2.fy: 402.4901
-Camera2.cx: 391.2742
-Camera2.cy: 299.5453
-
-Camera2.k1: -0.0464
-Camera2.k2: 0.1014
-Camera2.k3: -0.0508
-Camera2.p1: -0.00049303
-Camera2.p2: -0.000073449
-
 # Camera resolution
 Camera.width: 800
 Camera.height: 600
@@ -58,6 +46,16 @@ Camera.bf: 48.0  # Ajuste este valor com base na baseline do seu sistema estére
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
+Stereo.ThDepth: 60.0
+Stereo.T_c1_c2: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [0.9999, 0.0098, -0.0046, -0.1998684,
+         -0.0098, 0.9999, 0.0043, 0.0007489,
+         0.0047, -0.0043, 1.0000, -0.0011766,
+         0.0, 0.0, 0.0, 1.0]
+         # Transformation from camera to IMU
 IMU.T_b_c1: !!opencv-matrix
   rows: 4
   cols: 4

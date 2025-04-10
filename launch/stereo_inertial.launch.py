@@ -17,11 +17,10 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='stereo-inertial.yaml',
+            default_value='stereo-inertial-rescaled.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
                 DeclareLaunchArgument('namespace', default_value='SM2', description='namespace of node'),
-
         
         Node(
             package='orbslam3_ros2',

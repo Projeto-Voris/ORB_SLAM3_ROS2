@@ -27,7 +27,7 @@ private:
 
     void GrabImage(const sensor_msgs::msg::Image::SharedPtr msg);
 
-    cv_bridge::CvImagePtr m_cvImPtr;
+    cv::Mat img_cam;
 
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_subscriber;
 };

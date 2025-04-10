@@ -3,15 +3,16 @@
 SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
 : Node("ORB_SLAM3_Inertial"), m_SLAM(pSLAM), node_(node)
 {
-    tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
+    // tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
     pathpublisher = this->create_publisher<nav_msgs::msg::Path>("path", 10);
     posepublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
     statepublisher = this->create_publisher<std_msgs::msg::String>("state", 10);
     flagpublisher = this->create_publisher<std_msgs::msg::Bool>("flag", 10);
+    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
     this->declare_parameter("frame_id", "orbslam3");
-    this->declare_parameter("child_frame_id", "left_camera_link");
+    this->declare_parameter("child_frame_id", "SM2/left_camera_link");
 
 }
 SlamNode::~SlamNode() {
@@ -57,7 +58,6 @@ void SlamNode::Update(){
     PublishPose();
     PublishPath();
 }
-
 
 void SlamNode::PublishTrackedPointCloud(){
     std::vector<int> indexes;
@@ -117,6 +117,7 @@ void SlamNode::PublishTrackedPointCloud(){
     pclpublisher->publish(pointcloudmsg);
 
 }
+
 void SlamNode::PublishCurrentPointCloud(){
     std::vector<int> indexes;
     std::vector<ORB_SLAM3::MapPoint*> points = m_SLAM->GetTrackedMapPoints();
@@ -174,6 +175,7 @@ void SlamNode::PublishCurrentPointCloud(){
     }
     pclpublisher->publish(pointcloudmsg);
 }
+
 void SlamNode::PublishPath(){
     std::vector<ORB_SLAM3::KeyFrame*> trajectory = m_SLAM->GetTrajectory();
     auto path_msg = nav_msgs::msg::Path();
@@ -198,6 +200,7 @@ void SlamNode::PublishPath(){
     pathpublisher->publish(path_msg);
     
 }
+
 void SlamNode::PublishPose() {
     tf2::Transform grasp_tf = TransformFromSophus(SE3);
     auto pose_msg = geometry_msgs::msg::PoseStamped();
@@ -219,7 +222,8 @@ void SlamNode::PublishTransform(){
     sendmsg.child_frame_id = this->get_parameter("child_frame_id").as_string();;
     tf2::toMsg(grasp_tf, sendmsg.transform);
 
-    tf_publisher->publish(sendmsg);
+    // tf_publisher->publish(sendmsg);
+    tf_broadcaster_->sendTransform(sendmsg);
 }
 
 tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
