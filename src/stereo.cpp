@@ -23,10 +23,11 @@ int main(int argc, char **argv)
         std::cerr << "\nUsage: ros2 run orbslam stereo path_to_vocabulary path_to_settings do_rectify" << std::endl;
         return 1;
     }
+    bool visualization = false;
+
     auto node = std::make_shared<rclcpp::Node>("run_slam");
 
     
-    bool visualization = strcmp(argv[4],"True") == 0;
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::STEREO, visualization);
 
     std::shared_ptr<StereoSlamNode> slam_ros;
@@ -52,8 +53,8 @@ StereoSlamNode::StereoSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, con
 
 
     // Cria os subscritores usando o nó passado
-    left_sub = std::make_shared<message_filters::Subscriber<ImageMsg>>(node, "camera/left");
-    right_sub = std::make_shared<message_filters::Subscriber<ImageMsg>>(node, "camera/right");
+    left_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(node, "camera/left");
+    right_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(node, "camera/right");
 
     // Sincroniza os subscritores
     syncApproximate = std::make_shared<message_filters::Synchronizer<approximate_sync_policy>>(approximate_sync_policy(10), *left_sub, *right_sub);
@@ -64,7 +65,7 @@ StereoSlamNode::~StereoSlamNode()
 {
 }
 
-void StereoSlamNode::GrabStereo(const ImageMsg::SharedPtr msgLeft, const ImageMsg::SharedPtr msgRight) {
+void StereoSlamNode::GrabStereo(const sensor_msgs::msg::Image::SharedPtr msgLeft, const sensor_msgs::msg::Image::SharedPtr msgRight) {
     // Copia a imagem RGB da mensagem ROS para cv::Mat
     try {
         imLeft = cv_bridge::toCvShare(msgLeft, msgLeft->encoding)->image;

@@ -43,17 +43,18 @@ private:
     using ImageMsg = sensor_msgs::msg::Image;
     using approximate_sync_policy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image>;
 
-    void GrabStereo(const ImageMsg::SharedPtr msgLeft, const ImageMsg::SharedPtr msgRight);
+    void GrabStereo(const sensor_msgs::msg::Image::SharedPtr msgLeft, const sensor_msgs::msg::Image::SharedPtr msgRight);
 
     bool doRectify;
     bool rescale;
     cv::Mat M1l, M2l, M1r, M2r;
 
+
     cv::Mat imLeft;
     cv::Mat imRight;
 
-    std::shared_ptr<message_filters::Subscriber<ImageMsg>> left_sub;
-    std::shared_ptr<message_filters::Subscriber<ImageMsg>> right_sub;
+    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> left_sub;
+    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> right_sub;
 
     std::shared_ptr<message_filters::Synchronizer<approximate_sync_policy>> syncApproximate;
 

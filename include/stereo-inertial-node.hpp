@@ -21,8 +21,6 @@
 #include "utility.hpp"
 #include "slam_node.hpp"
 
-// using ImageMsg = sensor_msgs::msg::Image;
-
 class StereoInertialNode : public SlamNode
 {
 public:
@@ -30,32 +28,31 @@ public:
     ~StereoInertialNode();
 
 private:
-    using ImuMsg = sensor_msgs::msg::Imu;
-    void GrabImu(const ImuMsg::SharedPtr msg);
-    void GrabImageLeft(const ImageMsg::SharedPtr msgLeft);
-    void GrabImageRight(const ImageMsg::SharedPtr msgRight);
-    cv::Mat GetImage(const ImageMsg::SharedPtr msg);
+    void GrabImu(const sensor_msgs::msg::Imu::SharedPtr msg);
+    void GrabImageLeft(const sensor_msgs::msg::Image::SharedPtr msgLeft);
+    void GrabImageRight(const sensor_msgs::msg::Image::SharedPtr msgRight);
+    cv::Mat GetImage(const sensor_msgs::msg::Image::SharedPtr msg);
     void SyncWithImu();
-    void PublishPointCloud(std::vector<ORB_SLAM3::MapPoint*> points);
-    void Transform_orbslam2cam(const Eigen::Vector3f translation, const Eigen::Quaternionf rotation);
+    // void PublishPointCloud(std::vector<ORB_SLAM3::MapPoint*> points);
+    // void Transform_orbslam2cam(const Eigen::Vector3f translation, const Eigen::Quaternionf rotation);
 
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr   subImu_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subImgLeft_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subImgRight_;
 
     // Publisher for transform and PCL2
-    rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr tf_publisher;
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;
+    // rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr tf_publisher;
+    // rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;
 
     ORB_SLAM3::System *SLAM_;
     std::thread *syncThread_;
 
     // IMU
-    queue<ImuMsg::SharedPtr> imuBuf_;
+    queue<sensor_msgs::msg::Imu::SharedPtr> imuBuf_;
     std::mutex bufMutex_;
 
     // Image
-    queue<ImageMsg::SharedPtr> imgLeftBuf_, imgRightBuf_;
+    queue<sensor_msgs::msg::Image::SharedPtr> imgLeftBuf_, imgRightBuf_;
     std::mutex bufMutexLeft_, bufMutexRight_;
 
     bool doRectify_;

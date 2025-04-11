@@ -17,7 +17,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'pangolin',
-            default_value="True",
+            default_value="False",
             description='Use the viewer'
         ),
         DeclareLaunchArgument(
@@ -32,7 +32,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'rescale',
-            default_value=False,
+            default_value='False',
             description='Rescale Image'
         ),
         
