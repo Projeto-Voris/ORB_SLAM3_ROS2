@@ -14,20 +14,29 @@ using std::placeholders::_1;
 
 int main(int argc, char **argv)
 {
-    if(argc < 3)
+    rclcpp::init(argc, argv);
+    if(argc < 4)
     {
-        std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings" << std::endl;
+        std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings use_pangolin" << std::endl;
         return 1;
     }
-    rclcpp::init(argc, argv);
+    bool visualization;
+    if (argv[3] == "false")
+    {
+        visualization = false;
+    }
+    else
+    {
+        visualization = true;
+    }
+    std::cout << argv[3] << std::endl;
     auto node = std::make_shared<rclcpp::Node>("run_slam");
 
     // malloc error using new.. try shared ptr
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    bool visualization = true;
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, visualization);
+    ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, visualization);
 
-    auto slam_node = std::make_shared<MonocularSlamNode>(&SLAM, node.get());
+    auto slam_node = std::make_shared<MonocularSlamNode>(&pSLAM, node.get());
     std::cout << "============================ " << std::endl;
 
     rclcpp::spin(slam_node);
@@ -39,8 +48,10 @@ int main(int argc, char **argv)
 MonocularSlamNode::MonocularSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
 :   SlamNode(pSLAM, node)
 {
+    this->declare_parameter<bool>("rescale", false);
+    this->get_parameter("rescale", rescale);
     // std::cout << "slam changed" << std::endl;
-    m_image_subscriber = this->create_subscription<ImageMsg>(
+    m_image_subscriber = this->create_subscription<sensor_msgs::msg::Image>(
         "camera",
         10,
         std::bind(&MonocularSlamNode::GrabImage, this, std::placeholders::_1));
@@ -52,7 +63,7 @@ MonocularSlamNode::~MonocularSlamNode()
 
 }
 
-void MonocularSlamNode::GrabImage(const ImageMsg::SharedPtr msg)
+void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
 {
     // Copy the ros image message to cv::Mat.
     try
@@ -67,6 +78,7 @@ void MonocularSlamNode::GrabImage(const ImageMsg::SharedPtr msg)
     }
 
     std::cout<<"one frame has been sent"<<std::endl;
+    current_frame_time_ = now();
     SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
     // Update();
 }

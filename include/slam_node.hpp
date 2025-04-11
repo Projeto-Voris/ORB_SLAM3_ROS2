@@ -51,7 +51,7 @@ public:
     rclcpp::Node* node_;
 
 protected:
-    using ImageMsg = sensor_msgs::msg::Image;
+    // using ImageMsg = sensor_msgs::msg::Image;
 
     ORB_SLAM3::System* m_SLAM;
     std::vector<ORB_SLAM3::KeyFrame*> trajectory;

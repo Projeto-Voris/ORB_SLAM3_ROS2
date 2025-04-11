@@ -20,6 +20,21 @@ def generate_launch_description():
             default_value='left_mono.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='SM2',
+            description='Namespace of system'
+        ),
+        DeclareLaunchArgument(
+            'rescale',
+            default_value='False',
+            description='Rescale Image'
+        ),
+        DeclareLaunchArgument(
+            'pangolin',
+            default_value='False',
+            description='Use the viewer'
+        ),
         
         Node(
             package='orbslam3_ros2',
@@ -34,8 +49,9 @@ def generate_launch_description():
                     'monocular',
                     LaunchConfiguration('yaml_file')  # Use the file name directly
                 ]),
-                
+                LaunchConfiguration('pangolin')
             ],
+            parameters=[{'rescale': LaunchConfiguration('rescale')}],
             remappings=[
                 ('camera', '/SM2/left/image_raw')
             ]

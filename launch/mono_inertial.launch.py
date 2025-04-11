@@ -17,32 +17,40 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='stereo-inertial-rescaled.yaml',
+            default_value='left_mono-inertial.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
+        ),        
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='SM2',
+            description='Namespace of system'
         ),
-        DeclareLaunchArgument('namespace', default_value='SM2', description='namespace of node'),
-        DeclareLaunchArgument( 'pangolin', default_value="False", description='Use the viewer'),
+        DeclareLaunchArgument(
+            'pangolin',
+            default_value="False",
+            description='Use the viewer'
+        ),
+
         Node(
             package='orbslam3_ros2',
-            executable='stereo-inertial',
-            name='stereo_inertial_orbslam3',
+            executable='mono-inertial',
+            name='mono_inertial_orbslam3',
             namespace=LaunchConfiguration('namespace'),
             output='screen',
             arguments=[
                 LaunchConfiguration('vocabulary'),
                 PathJoinSubstitution([
                     FindPackageShare('orbslam3_ros2'),
-                    'config',  
-                    'stereo-inertial',
-                    LaunchConfiguration('yaml_file')
+                    'config',  # Assuming your config files are in the config directory
+                    'monocular-inertial',
+                    LaunchConfiguration('yaml_file')  # Use the file name directly
                 ]),
-                'False',
                 LaunchConfiguration('pangolin')
+                
             ],
             remappings=[
-                ('camera/left', '/SM2/left/image_raw'),
-                ('camera/right', '/SM2/right/image_raw'),
-                ('/imu' , '/SM2/imu/data_raw')  
+                ('camera', '/SM2/left/image_raw'),
+                ('imu', '/SM2/imu/data_raw')  # Assuming you want to remap the IMU topic as well
             ]
         )
     ])

@@ -29,6 +29,8 @@ private:
 
     cv::Mat img_cam;
 
+    bool rescale;
+
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_subscriber;
 };
 

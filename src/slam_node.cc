@@ -20,6 +20,7 @@ SlamNode::~SlamNode() {
     m_SLAM->Shutdown();
 }
 void SlamNode::Update(){
+    current_frame_time_ = now();
     int state_num = m_SLAM->GetTrackingState();
     
     auto statemsg = std_msgs::msg::String();
