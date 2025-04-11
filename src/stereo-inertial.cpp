@@ -19,7 +19,7 @@ int main(int argc, char **argv)
         rclcpp::shutdown();
         return 1;
     }
-    bool visualization = false;
+    bool visualization = true;
 
     auto node = std::make_shared<rclcpp::Node>("orb_slam");
 

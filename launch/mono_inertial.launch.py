@@ -17,7 +17,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='left_mono-inertial.yaml',
+            default_value='25red.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),        
         DeclareLaunchArgument(

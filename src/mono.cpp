@@ -20,16 +20,8 @@ int main(int argc, char **argv)
         std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings use_pangolin" << std::endl;
         return 1;
     }
-    bool visualization;
-    if (argv[3] == "false")
-    {
-        visualization = false;
-    }
-    else
-    {
-        visualization = true;
-    }
-    std::cout << argv[3] << std::endl;
+    bool visualization = true;
+
     auto node = std::make_shared<rclcpp::Node>("run_slam");
 
     // malloc error using new.. try shared ptr
@@ -69,7 +61,7 @@ void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
     try
     {
         img_cam = cv_bridge::toCvShare(msg, msg->encoding)->image;
-        cv::resize(img_cam, img_cam, cv::Size(1600, 1200), cv::INTER_LINEAR);
+        cv::resize(img_cam, img_cam, cv::Size(800, 600), cv::INTER_LINEAR);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -77,7 +69,7 @@ void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
         return;
     }
 
-    std::cout<<"one frame has been sent"<<std::endl;
+    // std::cout<<"one frame has been sent"<<std::endl;
     current_frame_time_ = now();
     SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
     // Update();

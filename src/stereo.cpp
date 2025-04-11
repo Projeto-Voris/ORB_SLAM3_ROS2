@@ -23,7 +23,7 @@ int main(int argc, char **argv)
         std::cerr << "\nUsage: ros2 run orbslam stereo path_to_vocabulary path_to_settings do_rectify" << std::endl;
         return 1;
     }
-    bool visualization = false;
+    bool visualization = true;
 
     auto node = std::make_shared<rclcpp::Node>("run_slam");
 

@@ -22,7 +22,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='sm2_stereo.yaml',
+            default_value='25red.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
         DeclareLaunchArgument(
@@ -32,7 +32,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'rescale',
-            default_value='False',
+            default_value='True',
             description='Rescale Image'
         ),
         

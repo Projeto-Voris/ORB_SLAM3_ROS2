@@ -20,51 +20,27 @@ File.version: "1.0"
 Camera.type: "PinHole"
 
 # Left Camera calibration and distortion parameters (OpenCV)
-Camera1.fx: 809.5590
-Camera1.fy: 809.4373
-Camera1.cx: 779.8459
-Camera1.cy: 595.5954
+Camera1.fx: 405.271561477202
+Camera1.fy: 404.797717388431
+Camera1.cx: 388.149566167593
+Camera1.cy: 301.198113369753
 
-Camera1.k1: -0.0395
-Camera1.k2: 0.0827
-Camera1.p1: -0.0006
-Camera1.p2: 0.0001
+Camera1.k1: -0.0581780368225094
+Camera1.k2: 0.120670037364983
+Camera1.k3: -0.0612505820724222
+Camera1.p1: 0.000780948904694939
+Camera1.p2: -0.000800827609674785
 
-# Right Camera calibration and distortion parameters (OpenCV)
-Camera2.fx: 805.3451
-Camera2.fy: 805.2451
-Camera2.cx: 781.8989
-Camera2.cy: 598.6680
-
-Camera2.k1: -0.0466
-Camera2.k2: 0.1005
-Camera2.p1: -0.0005
-Camera2.p2: -0.0001
 
 # Camera resolution
-Camera.width: 1600
-Camera.height: 1200
+Camera.width: 800
+Camera.height: 600
 
 Camera.fps: 40
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
-# Baseline times focal length (bf = baseline * fx)
-Camera.bf: 48.0  # Ajuste este valor com base na baseline do seu sistema estéreo
-
-# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera.RGB: 1
-
-Stereo.ThDepth: 60.0
-Stereo.T_c1_c2: !!opencv-matrix
-  rows: 4
-  cols: 4
-  dt: f
-  data: [0.9999, 0.0098, -0.0046, -0.1998684,
-         -0.0098, 0.9999, 0.0043, 0.0007489,
-         0.0047, -0.0043, 1.0000, -0.0011766,
-         0.0, 0.0, 0.0, 1.0]
          # Transformation from camera to IMU
 IMU.T_b_c1: !!opencv-matrix
   rows: 4
@@ -76,10 +52,10 @@ IMU.T_b_c1: !!opencv-matrix
     0.0, 0.0, 0.0, 1.0]
 
 # IMU noise
-IMU.NoiseGyro: 9.99644870663471e-05
-IMU.NoiseAcc: 0.0017554276547521732
-IMU.GyroWalk: 5.291169461542846e-07
-IMU.AccWalk: 3.839650514071629e-05
+IMU.NoiseGyro: 0.00010030383677353103 
+IMU.NoiseAcc: 0.0017862283519383298 
+IMU.GyroWalk: 5.005899751017297e-07 
+IMU.AccWalk: 3.745251231312492e-05 
 IMU.Frequency: 250.0
 
 
