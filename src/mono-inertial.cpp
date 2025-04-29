@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include <sys/stat.h> // Para mkdir
 
 #include "rclcpp/rclcpp.hpp"
 #include "mono-inertial-node.hpp"
@@ -9,6 +10,30 @@
 #include "System.h"
 
 using std::placeholders::_1;
+
+// Variável global para acesso ao SLAM
+ORB_SLAM3::System* pSLAM_global = nullptr;
+
+// Função para criar diretório se não existir
+void CreateDirectoryIfNotExists(const std::string& path) {
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
+        mkdir(path.c_str(), 0777);
+    }
+}
+
+// Função para salvamento dos dados inerciais
+void SaveMonoInertialData() {
+    if(!pSLAM_global) return;
+    
+    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/mono_inertial";
+    CreateDirectoryIfNotExists(output_dir);
+    
+    // Salva todos os dados implementados
+    pSLAM_global->SaveMapPoints(output_dir + "/map_points.ply");
+    pSLAM_global->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
+    pSLAM_global->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
+}
 
 int main(int argc, char **argv)
 {
@@ -24,10 +49,17 @@ int main(int argc, char **argv)
     auto node = std::make_shared<rclcpp::Node>("orb_slam");
 
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_MONOCULAR, visualization);
+    pSLAM_global = &pSLAM; // Atribui à variável global
 
     std::shared_ptr<MonoInertialNode> slam_ros;
     slam_ros = std::make_shared<MonoInertialNode>(&pSLAM, node.get());
     std::cout << "============================" << std::endl;
+
+    // Configura o handler para salvar dados no shutdown
+    rclcpp::on_shutdown([&]() {
+        SaveMonoInertialData();
+        pSLAM.Shutdown();
+    });
 
     rclcpp::spin(slam_ros->get_node_base_interface());
     rclcpp::shutdown();

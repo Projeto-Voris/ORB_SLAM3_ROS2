@@ -2,13 +2,38 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include <sys/stat.h> // Para mkdir
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "stereo-inertial-node.hpp"
-
 #include "System.h"
 
 using std::placeholders::_1;
+
+// Variável global para acesso ao SLAM
+ORB_SLAM3::System* pSLAM_global = nullptr;
+
+// Função para criar diretório se não existir
+void CreateDirectoryIfNotExists(const std::string& path) {
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
+        mkdir(path.c_str(), 0777);
+    }
+}
+
+// Função para salvamento dos dados estéreo-inerciais
+void SaveStereoInertialData() {
+    if(!pSLAM_global) return;
+    
+    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/stereo_inertial";
+    CreateDirectoryIfNotExists(output_dir);
+    
+    // Salva todos os dados implementados
+    pSLAM_global->SaveMapPoints(output_dir + "/map_points.ply");
+    pSLAM_global->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
+    pSLAM_global->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
+}
 
 int main(int argc, char **argv)
 {
@@ -24,16 +49,25 @@ int main(int argc, char **argv)
     auto node = std::make_shared<rclcpp::Node>("orb_slam");
 
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, visualization);
+    pSLAM_global = &pSLAM; // Atribui à variável global
 
     std::shared_ptr<StereoInertialNode> slam_ros;
     slam_ros = std::make_shared<StereoInertialNode>(&pSLAM, node.get(), argv[2], argv[3], argv[4]);
     std::cout << "============================" << std::endl;
+
+    // Configura o handler para salvar dados no shutdown
+    rclcpp::on_shutdown([&]() {
+        SaveStereoInertialData();
+        pSLAM.Shutdown();
+    });
 
     rclcpp::spin(slam_ros->get_node_base_interface());
     rclcpp::shutdown();
 
     return 0;
 }
+
+
 StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* node ,const std::string &strSettingsFile, const std::string &strDoRectify, const std::string &strDoEqual) :
     SlamNode(pSLAM, node)
 {

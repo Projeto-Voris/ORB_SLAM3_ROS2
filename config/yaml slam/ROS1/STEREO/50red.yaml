@@ -1,0 +1,75 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole"
+
+# Left Camera calibration and distortion parameters (OpenCV)
+Camera.fx: 405.271561477202
+Camera.fy: 404.797717388431
+Camera.cx: 388.149566167593
+Camera.cy: 301.198113369753
+
+Camera.k1: -0.0581780368225094
+Camera.k2: 0.120670037364983
+Camera.k3: -0.0612505820724222
+Camera.p1: 0.000780948904694939
+Camera.p2: -0.000800827609674785
+
+# Right Camera calibration and distortion parameters (OpenCV)
+Camera2.fx: 403.010034716118
+Camera2.fy: 402.577263369860
+Camera2.cx: 388.837358505829
+Camera2.cy: 301.825652931255
+
+Camera2.k1: -0.0616271089698340
+Camera2.k2: 0.134585679126191
+Camera2.k3: -0.0731806989452849
+Camera2.p1: 0.000999958091031624
+Camera2.p2: -0.00106464937886758
+
+# Transformation matrix from right camera to left camera
+Tlr: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [1.0000, -0.0079, 0.0039, -0.1995703,
+         0.0079, 1.0000, -0.0031, 0.0008759,
+         -0.0039, 0.0032, 1.0000, -0.0007022,
+         0.0, 0.0, 0.0, 1.0]
+
+# Configurações de imagem
+Camera.width: 800
+Camera.height: 600
+Camera.fps: 50
+Camera.RGB: 1
+
+# Baseline * fx (0.19984 * 404.3704 ≈ 80.8)
+Camera.bf: 80.0
+
+# Limiares de profundidade
+ThDepth: 60.0
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+ORBextractor.nFeatures: 1200
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500.0

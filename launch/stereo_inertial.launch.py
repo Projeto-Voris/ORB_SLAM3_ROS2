@@ -37,6 +37,7 @@ def generate_launch_description():
                     LaunchConfiguration('yaml_file')
                 ]),
                 'False',
+                'True',
                 LaunchConfiguration('pangolin')
             ],
             remappings=[

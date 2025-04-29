@@ -1,0 +1,113 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# System config
+#--------------------------------------------------------------------------------------------
+
+# When the variables are commented, the system doesn't load a previous session or not store the current one
+
+# If the LoadFile doesn't exist, the system give a message and create a new Atlas from scratch
+#System.LoadAtlasFromFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+
+# The store file is created from the current session, if a file with the same name exists it is deleted
+#System.SaveAtlasToFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters
+#--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
+Camera.type: "PinHole"
+
+# Left Camera calibration and distortion parameters (OpenCV)
+Camera1.fx: 405.271561477202
+Camera1.fy: 404.797717388431
+Camera1.cx: 388.149566167593
+Camera1.cy: 301.198113369753
+
+Camera1.k1: -0.0581780368225094
+Camera1.k2: 0.120670037364983
+Camera1.k3: -0.0612505820724222
+Camera1.p1: 0.000780948904694939
+Camera1.p2: -0.000800827609674785
+
+# Right Camera calibration and distortion parameters (OpenCV)
+Camera2.fx: 403.010034716118
+Camera2.fy: 402.577263369860
+Camera2.cx: 388.837358505829
+Camera2.cy: 301.825652931255
+
+Camera2.k1: -0.0616271089698340
+Camera2.k2: 0.134585679126191
+Camera2.k3: -0.0731806989452849
+Camera2.p1: 0.000999958091031624
+Camera2.p2: -0.00106464937886758
+
+# Camera resolution
+Camera.width: 800
+Camera.height: 600
+
+Camera.fps: 40
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Baseline times focal length (bf = baseline * fx)
+Camera.bf: 80.0  # Ajuste este valor com base na baseline do seu sistema estéreo
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Transformation matrix from right camera to left camera
+Stereo.ThDepth: 60.0
+Stereo.T_c1_c2: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [1.0000, -0.0079, 0.0039, -0.1995703,
+         0.0079, 1.0000, -0.0031, 0.0008759,
+         -0.0039, 0.0032, 1.0000, -0.0007022,
+         0.0, 0.0, 0.0, 1.0]
+
+
+         # Transformation from camera to IMU
+IMU.T_b_c1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [0.9999942541521951, 0.003305880986961045, 0.0007502089673450355, -0.07457090702528762,
+    -0.003301174755933806, 0.9999753923120803, -0.0061900739520239206, -0.0074128162865161416,
+    -0.0007706541542227714, 0.006187561813896418, 0.9999805598965279, -0.038081849071972415,
+    0.0, 0.0, 0.0, 1.0]
+
+# IMU noise
+IMU.NoiseGyro: 0.00010030383677353103 
+IMU.NoiseAcc: 0.0017862283519383298 
+IMU.GyroWalk: 5.005899751017297e-07 
+IMU.AccWalk: 3.745251231312492e-05 
+IMU.Frequency: 250.0
+
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+ORBextractor.nFeatures: 1500
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500.0
+Viewer.imageViewScale: 1.0
