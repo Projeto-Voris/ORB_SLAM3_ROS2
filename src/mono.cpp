@@ -103,5 +103,5 @@ void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
     // std::cout<<"one frame has been sent"<<std::endl;
     current_frame_time_ = now();
     SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
-    // Update();
+    Update();
 }

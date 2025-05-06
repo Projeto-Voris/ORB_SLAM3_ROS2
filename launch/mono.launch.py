@@ -31,6 +31,11 @@ def generate_launch_description():
             description='Rescale Image'
         ),
         DeclareLaunchArgument(
+            'namespace',
+            default_value='SM2',
+            description='Namespace of system'
+        ),
+        DeclareLaunchArgument(
             'pangolin',
             default_value='False',
             description='Use the viewer'
@@ -39,6 +44,7 @@ def generate_launch_description():
         Node(
             package='orbslam3_ros2',
             executable='mono',
+            namespace=LaunchConfiguration('namespace'),
             name='mono_orbslam3',
             output='screen',
             arguments=[
