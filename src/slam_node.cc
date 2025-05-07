@@ -9,9 +9,13 @@ SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
     posepublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
     statepublisher = this->create_publisher<std_msgs::msg::String>("state", 10);
     flagpublisher = this->create_publisher<std_msgs::msg::Bool>("flag", 10);
+
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
     this->declare_parameter("frame_id", "orbslam3");
+    this->declare_parameter("parent_frame_id", "SM2/base_link");
     this->declare_parameter("child_frame_id", "SM2/left_camera_link");
 
 }
@@ -192,8 +196,28 @@ void SlamNode::PublishPath(){
         pose.header.frame_id = this->get_parameter("frame_id").as_string();;
 
         // Transform to ROS coordinates
-        tf2::Transform grasp_tf = TransformFromSophus(SE3);
-        tf2::toMsg(grasp_tf, pose.pose);
+        // 1. SLAM output: map → camera_link
+        Sophus::SE3f T_cam_map = SE3;
+        Sophus::SE3f T_map_t_cam = T_cam_map.inverse();
+
+        tf2::Transform T_map_cam = TransformFromSophus(T_map_t_cam);
+        // T_map_cam = T_map_cam.inverse();
+
+        // 2. Static transform: base_link → camera_link from TF tree
+        std::string base_frame_ = this->get_parameter("parent_frame_id").as_string();
+        std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
+        std::string map_frame_ = this->get_parameter("frame_id").as_string();
+        auto tf_base_to_cam = tf_buffer_->lookupTransform(
+            base_frame_, cam_frame_, tf2::TimePointZero);
+        tf2::Transform T_base_cam;
+        tf2::fromMsg(tf_base_to_cam.transform, T_base_cam);
+
+        // 3. Compute inverse: camera → base
+        tf2::Transform T_cam_base = T_base_cam.inverse();
+
+        // 4. Compose: map → base
+        tf2::Transform T_map_base = T_map_cam * T_cam_base;
+        tf2::toMsg(T_map_base, pose.pose);
 
         path_msg.poses.push_back(pose);
 
@@ -203,28 +227,90 @@ void SlamNode::PublishPath(){
 }
 
 void SlamNode::PublishPose() {
-    tf2::Transform grasp_tf = TransformFromSophus(SE3);
+
+        // 1. SLAM output: map → camera_link
+        Sophus::SE3f T_cam_map = SE3;
+        Sophus::SE3f T_map_t_cam = T_cam_map.inverse();
+
+        tf2::Transform T_map_cam = TransformFromSophus(T_map_t_cam);
+        // T_map_cam = T_map_cam.inverse();
+
+        // 2. Static transform: base_link → camera_link from TF tree
+        std::string base_frame_ = this->get_parameter("parent_frame_id").as_string();
+        std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
+        std::string map_frame_ = this->get_parameter("frame_id").as_string();
+        auto tf_base_to_cam = tf_buffer_->lookupTransform(
+            base_frame_, cam_frame_, tf2::TimePointZero);
+        tf2::Transform T_base_cam;
+        tf2::fromMsg(tf_base_to_cam.transform, T_base_cam);
+
+        // 3. Compute inverse: camera → base
+        tf2::Transform T_cam_base = T_base_cam.inverse();
+
+        // 4. Compose: map → base
+        tf2::Transform T_map_base = T_map_cam * T_cam_base;
+
     auto pose_msg = geometry_msgs::msg::PoseStamped();
 
     pose_msg.header.stamp = current_frame_time_;
     pose_msg.header.frame_id = this->get_parameter("frame_id").as_string();;
-    tf2::toMsg(grasp_tf, pose_msg.pose);
+    tf2::toMsg(T_map_base, pose_msg.pose);
 
     posepublisher->publish(pose_msg);
 
 }
 
-void SlamNode::PublishTransform(){
-    auto sendmsg = geometry_msgs::msg::TransformStamped();
-    tf2::Transform grasp_tf = TransformFromSophus(SE3);
+// void SlamNode::PublishTransform(){
+//     auto sendmsg = geometry_msgs::msg::TransformStamped();
+//     tf2::Transform grasp_tf = TransformFromSophus(SE3);
 
-    sendmsg.header.stamp = current_frame_time_;
-    sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();;
-    sendmsg.child_frame_id = this->get_parameter("child_frame_id").as_string();;
-    tf2::toMsg(grasp_tf, sendmsg.transform);
+//     sendmsg.header.stamp = current_frame_time_;
+//     sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();;
+//     sendmsg.child_frame_id = this->get_parameter("child_frame_id").as_string();;
+//     tf2::toMsg(grasp_tf, sendmsg.transform);
 
-    // tf_publisher->publish(sendmsg);
-    tf_broadcaster_->sendTransform(sendmsg);
+//     // tf_publisher->publish(sendmsg);
+//     tf_broadcaster_->sendTransform(sendmsg);
+// }
+
+void SlamNode::PublishTransform()
+{
+    try {
+        // 1. SLAM output: map → camera_link
+        Sophus::SE3f T_cam_map = SE3;
+        Sophus::SE3f T_map_t_cam = T_cam_map.inverse();
+
+        tf2::Transform T_map_cam = TransformFromSophus(T_map_t_cam);
+        // T_map_cam = T_map_cam.inverse();
+
+        // 2. Static transform: base_link → camera_link from TF tree
+        std::string base_frame_ = this->get_parameter("parent_frame_id").as_string();
+        std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
+        std::string map_frame_ = this->get_parameter("frame_id").as_string();
+        auto tf_base_to_cam = tf_buffer_->lookupTransform(
+            base_frame_, cam_frame_, tf2::TimePointZero);
+        tf2::Transform T_base_cam;
+        tf2::fromMsg(tf_base_to_cam.transform, T_base_cam);
+
+        // 3. Compute inverse: camera → base
+        tf2::Transform T_cam_base = T_base_cam.inverse();
+
+        // 4. Compose: map → base
+        tf2::Transform T_map_base = T_map_cam * T_cam_base;
+
+        // 5. Broadcast: map → base
+        geometry_msgs::msg::TransformStamped sendmsg;
+        sendmsg.header.stamp = current_frame_time_;
+        sendmsg.header.frame_id = map_frame_;
+        sendmsg.child_frame_id = base_frame_;
+        tf2::toMsg(T_map_base, sendmsg.transform);
+
+        tf_broadcaster_->sendTransform(sendmsg);
+
+    } catch (const tf2::TransformException& ex) {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+                             "TF error computing map → base: %s", ex.what());
+    }
 }
 
 tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
@@ -233,18 +319,6 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
     Eigen::Matrix3d rotation = pose.rotationMatrix().cast<double>();
     Eigen::Vector3d translation = pose.translation().cast<double>();
 
-    // Debug original rotation and translation from ORB-SLAM
-    // RCLCPP_INFO(this->get_logger(), "Original Rotation Matrix (ORB):\n"
-    //                                 "[%f, %f, %f]\n"
-    //                                 "[%f, %f, %f]\n"
-    //                                 "[%f, %f, %f]",
-    //             rotation(0, 0), rotation(0, 1), rotation(0, 2),
-    //             rotation(1, 0), rotation(1, 1), rotation(1, 2),
-    //             rotation(2, 0), rotation(2, 1), rotation(2, 2));
-    // RCLCPP_INFO(this->get_logger(), "Original Translation Vector (ORB): [%f, %f, %f]",
-    //             translation(0), translation(1), translation(2));
-
-    // Convert Eigen data to tf2
     tf2::Matrix3x3 tf_camera_rotation(
         rotation(0, 0), rotation(0, 1), rotation(0, 2),
         rotation(1, 0), rotation(1, 1), rotation(1, 2),
@@ -253,39 +327,21 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
         translation(0), translation(1), translation(2));
 
     // Coordinate transformation matrix: ORB to ROS
-    static const tf2::Matrix3x3 tf_orb_to_ros(
-        0, 0, 1,  // ORB Z -> ROS X
-        -1, 0, 0, // ORB X -> ROS Y
-        0, -1, 0  // ORB Y -> ROS Z
-    );    // Coordinate transformation matrix: ORB to ROS
-    // static const tf2::Matrix3x3 tf_orb_to_ros(
-    //     1, 0, 0,  // ORB Z -> ROS X
-    //     0, 1, 0, // ORB X -> ROS Y
-    //     0, 0, 1  // ORB Y -> ROS Z
-    // );
+    // static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
+    //     0, 1, 0,  // ORB X -> ROS Y
+    //     -1, 0, 0, // ORB -Y -> ROS Y
+    //     0, 0, 1  // ORB Z -> ROS Z
+    // ); 
+   // Coordinate transformation matrix: ORB to ROS
+    static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
+        1, 0, 0,  // ORB X -> ROS Y
+        0, 1, 0, // ORB -Y -> ROS Y
+        0, 0, 1  // ORB Z -> ROS Z
+    ); 
 
     // Transform from orb coordinate system to ros coordinate system on camera coordinates
     tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
     tf_camera_translation = tf_orb_to_ros * tf_camera_translation;
-
-    // Inverse matrix
-    tf_camera_rotation = tf_camera_rotation.transpose();
-    tf_camera_translation = -(tf_camera_rotation * tf_camera_translation);
-
-    // Transform from orb coordinate system to ros coordinate system on map coordinates
-    tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
-    tf_camera_translation = tf_orb_to_ros * tf_camera_translation;
-
-    // Debug transformed rotation and translation
-    // RCLCPP_INFO(this->get_logger(), "Transformed Rotation Matrix (ROS):\n"
-    //                                 "[%f, %f, %f]\n"
-    //                                 "[%f, %f, %f]\n"
-    //                                 "[%f, %f, %f]",
-    //             tf_camera_rotation.getRow(0).x(), tf_camera_rotation.getRow(0).y(), tf_camera_rotation.getRow(0).z(),
-    //             tf_camera_rotation.getRow(1).x(), tf_camera_rotation.getRow(1).y(), tf_camera_rotation.getRow(1).z(),
-    //             tf_camera_rotation.getRow(2).x(), tf_camera_rotation.getRow(2).y(), tf_camera_rotation.getRow(2).z());
-    // RCLCPP_INFO(this->get_logger(), "Transformed Translation Vector (ROS): [%f, %f, %f]",
-    //             tf_camera_translation.x(), tf_camera_translation.y(), tf_camera_translation.z());
 
     // Return the final tf2::Transform
     return tf2::Transform(tf_camera_rotation, tf_camera_translation);
