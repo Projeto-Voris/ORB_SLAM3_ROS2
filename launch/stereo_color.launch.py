@@ -16,24 +16,46 @@ def generate_launch_description():
             description='Path to the ORB_SLAM3 vocabulary file'
         ),
         DeclareLaunchArgument(
+            'pangolin',
+            default_value="False",
+            description='Use the viewer'
+        ),
+        DeclareLaunchArgument(
             'yaml_file',
-            default_value='25red.yaml',
+            default_value='color_rescaled.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
-        DeclareLaunchArgument('namespace', default_value='SM2', description='namespace of node'),
-        DeclareLaunchArgument('pangolin', default_value="False", description='Use the viewer'),
-        DeclareLaunchArgument('rescale', default_value='True',  description='Rescale Image' ),
-        DeclareLaunchArgument('parent_link', default_value='SM2/base_link', description='Parent link of SLAM frame'),
-        DeclareLaunchArgument('child_link', default_value='SM2/left_camera_link', description='link of SLAM frame'),
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='SM2',
+            description='Namespace of system'
+        ),
+        DeclareLaunchArgument(
+            'rescale',
+            default_value='True',
+            description='Rescale Image'
+        ),
         DeclareLaunchArgument(
             'frame_id',
-            defalut_value='orbslam3',
-            description='PointCloud SLAM link'
+            default_value='orbslam3',
+            description='frame_id'
         ),
+        DeclareLaunchArgument(
+            'parent_frame_id',
+            default_value='SM2/base_link',
+            description='parent_frame_id'
+        ),
+        DeclareLaunchArgument(
+            'child_frame_id',
+            default_value='SM2/left_camera_link',
+            description='child_frame_id'
+        ),
+
+        
         Node(
             package='orbslam3_ros2',
-            executable='stereo-inertial',
-            name='stereo_inertial_orbslam3',
+            executable='stereo',
+            name='stereo_orbslam3',
             namespace=LaunchConfiguration('namespace'),
             output='screen',
             arguments=[
@@ -41,23 +63,21 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('orbslam3_ros2'),
                     'config',  
-                    'stereo-inertial',
+                    'stereo',
                     LaunchConfiguration('yaml_file')
                 ]),
-                'False',
                 'True',
                 LaunchConfiguration('pangolin')
             ],
-            parameters=[{
-                'rescale': LaunchConfiguration('rescale'),
-                'parent_frame_id': LaunchConfiguration('parent_link'),
-                'child_frame_id': LaunchConfiguration('child_link'),
-                'frame_id': LaunchConfiguration('frame_id')
-            }],
+            parameters=[
+                {'rescale': LaunchConfiguration('rescale')},
+                {'frame_id': LaunchConfiguration('frame_id')},
+                {'parent_frame_id': LaunchConfiguration('parent_frame_id')},
+                {'child_frame_id': LaunchConfiguration('child_frame_id')}
+                ],
             remappings=[
-                ('camera/left', '/SM2/left/image_raw'),
-                ('camera/right', '/SM2/right/image_raw'),
-                ('/imu' , '/SM2/imu/data_raw')  
+                ('camera/left', 'left/image_raw'),
+                ('camera/right', 'right/image_raw')
             ]
         )
     ])

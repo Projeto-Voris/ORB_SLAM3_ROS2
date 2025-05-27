@@ -1,0 +1,82 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# System config
+#--------------------------------------------------------------------------------------------
+
+# System.LoadAtlasFromFile: "your_session.atlas"
+# System.SaveAtlasToFile: "your_session.atlas"
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
+Camera.type: "PinHole"
+
+# Left Camera calibration and distortion parameters (OpenCV)
+Camera1.fx: 416.4
+Camera1.fy: 372.66
+Camera1.cx: 407.19
+Camera1.cy: 303.15
+
+Camera1.k1: -0.21279 
+Camera1.k2: 0.10013
+Camera1.k3: -0.022903
+Camera1.p1: -0.00014477
+Camera1.p2: -4.2986e-05
+
+# Right Camera calibration and distortion parameters (OpenCV)
+Camera2.fx: 415.84
+Camera2.fy: 372.29
+Camera2.cx: 401.16
+Camera2.cy: 304.67
+
+Camera2.k1: -0.21118
+Camera2.k2: 0.095642
+Camera2.k3: -0.020665
+Camera2.p1: -2.9388e-05 
+Camera2.p2: -5.4179e-05
+
+Camera.width: 800  # Replace with actual resolution
+Camera.height: 600
+
+Camera.fps: 60
+Camera.RGB: 0
+
+Stereo.ThDepth: 60.0
+
+Stereo.T_c1_c2: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [0.99976, 0.021805, -0.0027529, -0.20003,
+        -0.021798, 0.99976, 0.0025581, 0.0009721,
+        0.002808,-0.0024975,0.99999,  -0.00091218,
+        0, 0, 0,  1]
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+ORBextractor.nFeatures: 1500
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500.0
+Viewer.imageViewScale: 1.0
