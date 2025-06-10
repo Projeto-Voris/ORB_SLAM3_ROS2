@@ -65,6 +65,9 @@ protected:
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
+    tf2::Transform initial_map_base_offset_;
+    bool initial_offset_set_ = false;
+
 private:
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr posepublisher;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;

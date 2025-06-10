@@ -216,8 +216,10 @@ void SlamNode::PublishPath(){
         tf2::Transform T_cam_base = T_base_cam.inverse();
 
         // 4. Compose: map → base
+        // Apply the offset so that base_link starts at (0,0,0) in map
         tf2::Transform T_map_base = T_map_cam * T_cam_base;
-        tf2::toMsg(T_map_base, pose.pose);
+        tf2::Transform T_map_base_zeroed = initial_map_base_offset_.inverse() * T_map_base;
+        tf2::toMsg(T_map_base_zeroed, pose.pose);
 
         path_msg.poses.push_back(pose);
 
@@ -249,12 +251,13 @@ void SlamNode::PublishPose() {
 
         // 4. Compose: map → base
         tf2::Transform T_map_base = T_map_cam * T_cam_base;
+        tf2::Transform T_map_base_zeroed = initial_map_base_offset_.inverse() * T_map_base;
 
     auto pose_msg = geometry_msgs::msg::PoseStamped();
 
     pose_msg.header.stamp = current_frame_time_;
     pose_msg.header.frame_id = this->get_parameter("frame_id").as_string();;
-    tf2::toMsg(T_map_base, pose_msg.pose);
+    tf2::toMsg(T_map_base_zeroed, pose_msg.pose);
 
     posepublisher->publish(pose_msg);
 
@@ -283,6 +286,8 @@ void SlamNode::PublishTransform()
         tf2::Transform T_map_cam = TransformFromSophus(T_map_t_cam);
         // T_map_cam = T_map_cam.inverse();
 
+
+
         // 2. Static transform: base_link → camera_link from TF tree
         std::string base_frame_ = this->get_parameter("parent_frame_id").as_string();
         std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
@@ -298,12 +303,23 @@ void SlamNode::PublishTransform()
         // 4. Compose: map → base
         tf2::Transform T_map_base = T_map_cam * T_cam_base;
 
+                        // Set initial offset if not set
+        if (!initial_offset_set_) {
+            initial_map_base_offset_.setIdentity();
+            initial_map_base_offset_.setOrigin(T_cam_base.getOrigin());
+            initial_offset_set_ = true;
+        }
+
+        // Apply the offset so that base_link starts at (0,0,0) in map
+        tf2::Transform T_map_base_zeroed = initial_map_base_offset_.inverse() * T_map_base;
+
+
         // 5. Broadcast: map → base
         geometry_msgs::msg::TransformStamped sendmsg;
         sendmsg.header.stamp = current_frame_time_;
         sendmsg.header.frame_id = map_frame_;
         sendmsg.child_frame_id = base_frame_;
-        tf2::toMsg(T_map_base, sendmsg.transform);
+        tf2::toMsg(T_map_base_zeroed, sendmsg.transform);
 
         tf_broadcaster_->sendTransform(sendmsg);
 
@@ -328,9 +344,9 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
 
     // Coordinate transformation matrix: ORB to ROS
     // static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
-    //     0, 1, 0,  // ORB X -> ROS Y
-    //     -1, 0, 0, // ORB -Y -> ROS Y
-    //     0, 0, 1  // ORB Z -> ROS Z
+    //     0, 0, 1,  // ORB X -> ROS Y
+    //     1, 0, 0, // ORB -Y -> ROS Y
+    //     0, 1, 0  // ORB Z -> ROS Z
     // ); 
    // Coordinate transformation matrix: ORB to ROS
     static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
