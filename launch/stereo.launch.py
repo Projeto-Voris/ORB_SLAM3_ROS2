@@ -36,18 +36,18 @@ def generate_launch_description():
             description='Rescale Image'
         ),
         DeclareLaunchArgument(
-            'parent_link',
+            'parent_frame_id',
             default_value='SM2/base_link',
             description='Parent link of SLAM frame'
         ),
         DeclareLaunchArgument(
-            'child_link',
+            'child_frame_id',
             default_value='SM2/left_camera_link',
             description='link of SLAM frame'
         ),
         DeclareLaunchArgument(
             'frame_id',
-            defalut_value='orbslam3',
+            default_value='orbslam3',
             description='PointCloud SLAM link'
         ),
         
@@ -70,8 +70,8 @@ def generate_launch_description():
             ],
             parameters=[{
                 'rescale': LaunchConfiguration('rescale'),
-                'parent_frame_id': LaunchConfiguration('parent_link'),
-                'child_frame_id': LaunchConfiguration('child_link'),
+                'parent_frame_id': LaunchConfiguration('parent_frame_id'),
+                'child_frame_id': LaunchConfiguration('child_frame_id'),
                 'frame_id': LaunchConfiguration('frame_id')
             }],
             remappings=[
