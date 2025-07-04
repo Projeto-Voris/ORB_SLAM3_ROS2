@@ -19,50 +19,60 @@ File.version: "1.0"
 
 Camera.type: "PinHole"
 
-# Left Camera calibration and distortion parameters (OpenCV)
-Camera1.fx: 809.423284048306
-Camera1.fy: 808.183453260988
-Camera1.cx: 779.603261139102
-Camera1.cy: 600.767993727494
+# --- Câmera 1 (Esquerda) ---
+# Extraído de: stereoParams.CameraParameters1
+Camera1.fx: 810.5928
+Camera1.fy: 809.5797
+Camera1.cx: 778.0898
+Camera1.cy: 599.2234
+# Coeficientes de distorção Radial (k1, k2, k3) e Tangencial (p1, p2)
+Camera1.k1: -0.0442
+Camera1.k2: 0.0919
+Camera1.k3: -0.0429
+Camera1.p1: -0.00024407 # -2.4407e-04
+Camera1.p2: -0.000085344# -8.5344e-05
 
-Camera1.k1: -0.0501592174073641
-Camera1.k2: 0.105531361259854
-Camera1.k3: -0.0518827035319686
-Camera1.p1: 1.509557786743519e-04
-Camera1.p2: -7.312116719342477e-05
+# --- Câmera 2 (Direita) ---
+# Extraído de: stereoParams.CameraParameters2
+Camera2.fx: 807.4499
+Camera2.fy: 806.4732
+Camera2.cx: 778.3799
+Camera2.cy: 599.9704
+# Coeficientes de distorção Radial (k1, k2, k3) e Tangencial (p1, p2)
+Camera2.k1: -0.0534
+Camera2.k2: 0.1148
+Camera2.k3: -0.0583
+Camera2.p1: -0.000045984 # -4.5984e-04
+Camera2.p2: 0.0012
 
-# Right Camera calibration and distortion parameters (OpenCV)
-Camera2.fx: 805.458427142002
-Camera2.fy: 804.166682377088
-Camera2.cx: 780.385886608082
-Camera2.cy: 601.102365557975
-
-Camera2.k1: -0.0533394483291042
-Camera2.k2: 0.111560864880882
-Camera2.k3: -0.0551281609057820
-Camera2.p1: 1.86032836987892e-05
-Camera2.p2: -0.000303642532971288
-
+# --- Dimensões da Imagem ---
+# Extraído de ambos os parâmetros da câmera
 Camera.width: 1600
 Camera.height: 1200
 
-# Camera frames per second
-Camera.fps: 60
+# --- Configurações Gerais ---
+Camera.fps: 30 # Ajuste para o FPS do seu vídeo/câmera
+Camera.RGB: 1   # 1 para RGB, 0 para BGR
 
-# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera.RGB: 1
+# --- Parâmetros Estéreo ---
+# O baseline*fx. Este valor pode precisar de ajuste fino.
+Stereo.bf: 40.0 
 
-Stereo.ThDepth: 60.0
+# Limiar de profundidade para considerar pontos próximos/distantes.
+Stereo.ThDepth: 40.0
 
-# Transformation matrix from right camera to left camera
+# --- Matriz de Transformação Estéreo (Extrínsecos) ---
+# Extraído de: stereoParams.RotationOfCamera2 e stereoParams.TranslationOfCamera2
+# Nota: A translação foi dividida por 1000 para converter de mm (do MATLAB) para m.
 Stereo.T_c1_c2: !!opencv-matrix
   rows: 4
   cols: 4
   dt: f
-  data: [1.0000, -0.0081, 0.0034, -0.1996194,
-         0.0081, 1.0000, -0.0042, 0.0010670,
-         -0.0034, 0.0042, 1.0000, -0.0007914,
-         0.0, 0.0, 0.0, 1.0]
+  data: [
+     1.0000, -0.0085, 0.0045, -0.1996292,
+     0.0086, 0.9999, -0.0059, 0.0010488,
+     -0.0044, 0.0060, 1.0000, -0.0004105,
+     0.0, 0.0, 0.0, 1.0 ]
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
