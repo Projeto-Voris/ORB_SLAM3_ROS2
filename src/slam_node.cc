@@ -109,15 +109,46 @@ void SlamNode::PublishTrackedPointCloud(){
     pointcloudmsg.is_bigendian = false;
     pointcloudmsg.data.resize(pointcloudmsg.point_step*count);
 
+    // Lookup static transform only once
+    tf2::Transform T_cam_base;
+    std::string base_frame_ = "base_link_cam";
+    std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
+    try {
+        auto tf_cam_to_base = tf_buffer_->lookupTransform(
+            base_frame_, cam_frame_, tf2::TimePointZero);
+        tf2::fromMsg(tf_cam_to_base.transform, T_cam_base);
+    } catch (const tf2::TransformException& ex) {
+        RCLCPP_WARN(this->get_logger(), "TF error: %s", ex.what());
+        return;
+    }
+
     for (size_t i = 0; i < count; i++)
     {
         float x = points[indexes[i]]->GetWorldPos()(0);
         float y = points[indexes[i]]->GetWorldPos()(1);
         float z = points[indexes[i]]->GetWorldPos()(2);
 
-        memcpy(&pointcloudmsg.data[i*12], &x, 4);
-        memcpy(&pointcloudmsg.data[i*12 + 4], &y, 4);
-        memcpy(&pointcloudmsg.data[i*12 + 8], &z, 4);
+        tf2::Vector3 pt_cam(x, y, z);
+        tf2::Vector3 pt_base = pt_cam;
+
+        if (initial_offset_set_) {
+            tf2::Vector3 pt_base_zeroed = initial_map_base_offset_.inverse() * pt_cam;
+            float xb = pt_base_zeroed.x();
+            float yb = pt_base_zeroed.y();
+            float zb = pt_base_zeroed.z();
+            memcpy(&pointcloudmsg.data[i*12], &xb, 4);
+            memcpy(&pointcloudmsg.data[i*12 + 4], &yb, 4);
+            memcpy(&pointcloudmsg.data[i*12 + 8], &zb, 4);
+
+        }
+        else{
+            memcpy(&pointcloudmsg.data[i*12], &x, 4);
+            memcpy(&pointcloudmsg.data[i*12 + 4], &y, 4);
+            memcpy(&pointcloudmsg.data[i*12 + 8], &z, 4);
+        }
+
+
+
     }
     pclpublisher->publish(pointcloudmsg);
 
@@ -127,7 +158,7 @@ void SlamNode::PublishCurrentPointCloud(){
     std::vector<int> indexes;
     std::vector<ORB_SLAM3::MapPoint*> points = m_SLAM->GetTrackedMapPoints();
     auto pointcloudmsg = sensor_msgs::msg::PointCloud2();
-    
+ 
 
     int count = 0;
     
@@ -263,19 +294,6 @@ void SlamNode::PublishPose() {
 
 }
 
-// void SlamNode::PublishTransform(){
-//     auto sendmsg = geometry_msgs::msg::TransformStamped();
-//     tf2::Transform grasp_tf = TransformFromSophus(SE3);
-
-//     sendmsg.header.stamp = current_frame_time_;
-//     sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();;
-//     sendmsg.child_frame_id = this->get_parameter("child_frame_id").as_string();;
-//     tf2::toMsg(grasp_tf, sendmsg.transform);
-
-//     // tf_publisher->publish(sendmsg);
-//     tf_broadcaster_->sendTransform(sendmsg);
-// }
-
 void SlamNode::PublishTransform()
 {
     try {
@@ -342,18 +360,11 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
     tf2::Vector3 tf_camera_translation(
         translation(0), translation(1), translation(2));
 
-    // Coordinate transformation matrix: ORB to ROS
-    // static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
-    //     0, 0, 1,  // ORB X -> ROS Y
-    //     1, 0, 0, // ORB -Y -> ROS Y
-    //     0, 1, 0  // ORB Z -> ROS Z
-    // ); 
    // Coordinate transformation matrix: ORB to ROS
-    static const tf2::Matrix3x3 tf_orb_to_ros( // For orbslam3 frame [0 pi/2 0]
-        1, 0, 0,  // ORB X -> ROS Y
-        0, 1, 0, // ORB -Y -> ROS Y
-        0, 0, 1  // ORB Z -> ROS Z
-    ); 
+    static const tf2::Matrix3x3 tf_orb_to_ros(  1, 0, 0,    // ORB X -> ROS X
+                                                0, 1, 0,    // ORB Y -> ROS Y
+                                                0, 0, 1 ); // ORB Z -> ROS Z
+                                            
 
     // Transform from orb coordinate system to ros coordinate system on camera coordinates
     tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
