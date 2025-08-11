@@ -3,3 +3,4 @@ config/isaac
 /.vscode
 /.idea/
 /cmake-build-debug/
+*/results/*.*

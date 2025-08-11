@@ -30,7 +30,7 @@ Camera1.k1: -0.0442
 Camera1.k2: 0.0919
 Camera1.k3: -0.0429
 Camera1.p1: -0.00024407 # -2.4407e-04
-Camera1.p2: -0.000085344# -8.5344e-05
+Camera1.p2: -0.000085344 # -8.5344e-05
 
 # --- Câmera 2 (Direita) ---
 # Extraído de: stereoParams.CameraParameters2
@@ -64,14 +64,25 @@ Stereo.ThDepth: 40.0
 # --- Matriz de Transformação Estéreo (Extrínsecos) ---
 # Extraído de: stereoParams.RotationOfCamera2 e stereoParams.TranslationOfCamera2
 # Nota: A translação foi dividida por 1000 para converter de mm (do MATLAB) para m.
+# ORIGINAL
+# Stereo.T_c1_c2: !!opencv-matrix
+#   rows: 4
+#   cols: 4
+#   dt: f
+#   data: [
+#      1.0000, -0.0085, 0.0045, -0.1996292,
+#      0.0086, 0.9999, -0.0059, 0.0010488,
+#      -0.0044, 0.0060, 1.0000, -0.0004105,
+#      0.0, 0.0, 0.0, 1.0 ]
+# INVERTED
 Stereo.T_c1_c2: !!opencv-matrix
   rows: 4
   cols: 4
   dt: f
   data: [
-     1.0000, -0.0085, 0.0045, -0.1996292,
-     0.0086, 0.9999, -0.0059, 0.0010488,
-     -0.0044, 0.0060, 1.0000, -0.0004105,
+     1.0000, 0.0085, -0.0044, 0.1996292,
+     -0.0086, 0.9999, 0.0059, 0.0010488,
+     0.0045, -0.0060, 1.0000, 0.0004105,
      0.0, 0.0, 0.0, 1.0 ]
 
 #--------------------------------------------------------------------------------------------
