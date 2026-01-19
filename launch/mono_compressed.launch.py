@@ -17,7 +17,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='bluerov_fpv.yaml',
+            default_value='tbuggy.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
         DeclareLaunchArgument(
@@ -37,17 +37,17 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'parent_frame_id',
-            default_value='base_link',
+            default_value='tbuggy/base_footprint',
             description='Parent link of SLAM frame'
         ),
         DeclareLaunchArgument(
             'child_frame_id',
-            default_value='Passive/left_camera_link',
+            default_value='tbuggy/camera_front',
             description='link of SLAM frame'
         ),
         DeclareLaunchArgument(
             'frame_id',
-            default_value='map',
+            default_value='orbslam3',
             description='PointCloud SLAM link'
         ),
         DeclareLaunchArgument(
@@ -84,7 +84,7 @@ def generate_launch_description():
                         'frame_id': LaunchConfiguration('frame_id'),
                         'ENU_publish': LaunchConfiguration('ENU_publish')}],
             remappings=[
-                ('camera', '/Passive/image_raw'),  # Remap the camera topic to the video frames topic
+                ('camera', '/tbuggy/camera_front/image_raw'),  # Remap the camera topic to the video frames topic
                 #('pose', '/mavros/vision_pose/pose'),
             ]
         )

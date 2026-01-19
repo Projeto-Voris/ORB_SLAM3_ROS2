@@ -20,7 +20,7 @@
 
 #include "utility.hpp"
 #include "slam_node.hpp"
-
+#include <queue>
 // using ImageMsg = sensor_msgs::msg::Image;
 
 class MonoInertialNode : public SlamNode

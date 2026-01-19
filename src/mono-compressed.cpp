@@ -5,7 +5,7 @@
 #include <sys/stat.h> // Para mkdir
 
 #include "rclcpp/rclcpp.hpp"
-#include "monocular-slam-node.hpp"
+#include "monocular-compressed-slam-node.hpp"
 
 #include "System.h"
 
@@ -23,10 +23,10 @@ void CreateDirectoryIfNotExists(const std::string& path) {
 }
 
 // Função para salvamento dos dados
-void SaveMonoData() {
+void SaveMonoCompressedData() {
     if(!pSLAM_global) return;
     
-    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/mono";
+    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/mono_compressed";
     CreateDirectoryIfNotExists(output_dir);
     
     // Salva todos os dados implementados
@@ -40,23 +40,23 @@ int main(int argc, char **argv)
     rclcpp::init(argc, argv);
     if(argc < 4)
     {
-        std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings use_pangolin" << std::endl;
+        std::cerr << "\nUsage: ros2 run orbslam mono_compressed path_to_vocabulary path_to_settings use_pangolin" << std::endl;
         return 1;
     }
     bool visualization = false;
 
-    auto node = std::make_shared<rclcpp::Node>("run_slam");
+    auto node = std::make_shared<rclcpp::Node>("run_slam_compressed");
 
     // Create SLAM system
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, visualization);
     pSLAM_global = &pSLAM; // Atribui à variável global
 
-    auto slam_node = std::make_shared<MonocularSlamNode>(&pSLAM, node.get());
+    auto slam_node = std::make_shared<MonocularCompressedSlamNode>(&pSLAM, node.get());
     std::cout << "============================ " << std::endl;
 
     // Configura o handler para salvar dados no shutdown
     rclcpp::on_shutdown([&]() {
-        SaveMonoData();
+        SaveMonoCompressedData();
         pSLAM.Shutdown();
     });
 
@@ -68,29 +68,29 @@ int main(int argc, char **argv)
 
 
 
-MonocularSlamNode::MonocularSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
+MonocularCompressedSlamNode::MonocularCompressedSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
 :   SlamNode(pSLAM, node)
 {
     this->declare_parameter<bool>("rescale", false);
     this->get_parameter("rescale", rescale);
     // std::cout << "slam changed" << std::endl;
-    m_image_subscriber = this->create_subscription<sensor_msgs::msg::Image>(
-        "camera",
+    m_image_subscriber = this->create_subscription<sensor_msgs::msg::CompressedImage>(
+        "camera/compressed",
         10,
-        std::bind(&MonocularSlamNode::GrabImage, this, std::placeholders::_1));
+        std::bind(&MonocularCompressedSlamNode::GrabImage, this, std::placeholders::_1));
 }
 
-MonocularSlamNode::~MonocularSlamNode()
+MonocularCompressedSlamNode::~MonocularCompressedSlamNode()
 {
 
 }
 
-void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
+void MonocularCompressedSlamNode::GrabImage(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
 {
-    // Copy the ros image message to cv::Mat.
+    // Copy the ros compressed image message to cv::Mat.
     try
     {
-        img_cam = cv_bridge::toCvShare(msg, msg->encoding)->image;
+        img_cam = cv_bridge::toCvCopy(msg, "bgr8")->image;
         // cv::resize(img_cam, img_cam, cv::Size(960, 540), cv::INTER_LINEAR);
     }
     catch (cv_bridge::Exception& e)

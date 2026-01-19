@@ -20,7 +20,7 @@
 
 #include "utility.hpp"
 #include "slam_node.hpp"
-
+#include <queue>
 class StereoInertialNode : public SlamNode
 {
 public:

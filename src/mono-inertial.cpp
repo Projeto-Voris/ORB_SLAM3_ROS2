@@ -44,14 +44,14 @@ int main(int argc, char **argv)
         rclcpp::shutdown();
         return 1;
     }
-    bool visualization = true;
+    bool visualization = false;
     
     auto node = std::make_shared<rclcpp::Node>("orb_slam");
 
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_MONOCULAR, visualization);
     pSLAM_global = &pSLAM; // Atribui à variável global
 
-    std::shared_ptr<MonoInertialNode> slam_ros;
+    // std::shared_ptr<MonoInertialNode> slam_ros;
     auto slam_node = std::make_shared<MonoInertialNode>(&pSLAM, node.get());
     std::cout << "============================" << std::endl;
 
@@ -122,7 +122,8 @@ cv::Mat MonoInertialNode::GetImage(const sensor_msgs::msg::Image::SharedPtr msg)
     try
     {
         cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-        cv::resize(cv_ptr->image, resized_img, cv::Size(800, 600), cv::INTER_LINEAR);
+        resized_img = cv_ptr->image;
+        // cv::resize(cv_ptr->image, resized_img, cv::Size(1920, 1080), cv::INTER_LINEAR);
     }
     catch (cv_bridge::Exception &e)
     {
@@ -179,7 +180,7 @@ void MonoInertialNode::SyncWithImu()
             SE3 = m_SLAM->TrackMonocular(img, tImg, vImuMeas);
             
             Update();
-            
+            TrackedImage(img);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
