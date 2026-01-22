@@ -74,12 +74,12 @@ int main(int argc, char **argv)
         // instantiate saver node with intra-process subscriptions enabled
         // StereoImageSaverImpl is the concrete implementation (defined in the cpp)
         // we create it with use_intra_process = true so its subscriptions use intra-process option
-        auto saver_node = std::make_shared<StereoImageSaverImpl>(true); // zero-copy inside process
+        // auto saver_node = std::make_shared<StereoImageSaverImpl>(true); // zero-copy inside process
 
         // Run both in a multi-threaded executor
         rclcpp::executors::MultiThreadedExecutor exec;
         exec.add_node(slam_node);
-        exec.add_node(saver_node);
+        // exec.add_node(saver_node);
 
         RCLCPP_INFO(slam_node->get_logger(), "Running SLAM and Saver in the same process (MultiThreadedExecutor) for zero-copy intra-process transport.");
         exec.spin();

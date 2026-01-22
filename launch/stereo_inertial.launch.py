@@ -41,7 +41,6 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('orbslam3_ros2'),
                     'config',  
-                    'stereo-inertial',
                     LaunchConfiguration('yaml_file')
                 ]),
                 'False',

@@ -64,7 +64,6 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('orbslam3_ros2'),
                     'config',  
-                    'stereo',
                     LaunchConfiguration('yaml_file')
                 ]),
                 'True',

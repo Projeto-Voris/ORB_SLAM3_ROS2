@@ -22,7 +22,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'yaml_file',
-            default_value='stereo_bluerov.yaml',
+            default_value='stereo_bluerov_uw_bw.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
         ),
         DeclareLaunchArgument(

@@ -6,7 +6,7 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     return LaunchDescription([
-                DeclareLaunchArgument(
+            DeclareLaunchArgument(
             'vocabulary',
             default_value=PathJoinSubstitution([
                 FindPackageShare('orbslam3_ros2'),
@@ -15,7 +15,7 @@ def generate_launch_description():
             ]),
             description='Path to the ORB_SLAM3 vocabulary file'
         ),
-         DeclareLaunchArgument(
+        DeclareLaunchArgument(
             'yaml_file',
             default_value='bluerov_fpv.yaml',
             description='Name of the ORB_SLAM3 YAML configuration file'
@@ -47,7 +47,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'frame_id',
-            default_value='orbslam3',
+            default_value='map',
             description='PointCloud SLAM link'
         ),
         DeclareLaunchArgument(
@@ -60,8 +60,7 @@ def generate_launch_description():
             default_value='True',
             description='Publish tracked image'
         ),
-        
-
+    
         Node(
             package='orbslam3_ros2',
             executable='mono-inertial',
@@ -73,7 +72,6 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('orbslam3_ros2'),
                     'config',  # Assuming your config files are in the config directory
-                    'monocular',
                     LaunchConfiguration('yaml_file')  # Use the file name directly
                 ]),
                 LaunchConfiguration('pangolin')

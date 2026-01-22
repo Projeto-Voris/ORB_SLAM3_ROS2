@@ -48,6 +48,7 @@ ament_target_dependencies(mono rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin O
 add_executable(stereo
   src/stereo.cpp
   src/slam_node.cc
+  #src/stereo_image_saver_node.cpp
 )
 ament_target_dependencies(stereo rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
@@ -69,28 +70,16 @@ add_executable(mono-compressed
 )
 ament_target_dependencies(mono-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-#add_executable(rgbd
-#  src/rgbd/rgbd.cpp
-#  src/rgbd/rgbd-slam-node.cpp
-#)
-#ament_target_dependencies(rgbd rclcpp sensor_msgs cv_bridge message_filters ORB_SLAM3 Pangolin OpenCV)
-
-#add_executable(stereo
-#  src/stereo/stereo.cpp
-#  src/stereo/stereo-slam-node.cpp
-#)
-#ament_target_dependencies(stereo rclcpp sensor_msgs nav_msgs cv_bridge message_filters ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros)
-
-#add_executable(stereo-inertial
-#  src/stereo-inertial/stereo-inertial.cpp
-#  src/stereo-inertial/stereo-inertial-node.cpp
-#)
-#ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV)
+add_executable(mono-inertial-compressed
+  src/mono-inertial-compressed.cpp
+  src/slam_node.cc
+)
+ament_target_dependencies(mono-inertial-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
 install(TARGETS mono mono-inertial stereo stereo-inertial mono-compressed DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
-install(DIRECTORY launch config vocabulary launch
+install(DIRECTORY launch config vocabulary
  DESTINATION share/${PROJECT_NAME}/)
 
 ament_package()

@@ -402,7 +402,6 @@ void SlamNode::PublishTransform()
 tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
 {
     // Convert pose to double precision for tf2 compatibility
-    bool enu_pub = this->get_parameter("ENU_publish").as_bool();
     Eigen::Matrix3d rotation = pose.rotationMatrix().cast<double>();
     Eigen::Vector3d translation = pose.translation().cast<double>();
 
@@ -413,30 +412,18 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
     tf2::Vector3 tf_camera_translation(
         translation(0), translation(1), translation(2));
 
-    // choose static mapping matrix
-    const tf2::Matrix3x3 &tf_orb_to_ros = enu_pub ? SlamNode::tf_orb_to_ros_enu : SlamNode::tf_orb_to_ros_default;
+   // Coordinate transformation matrix: ORB to ROS
+    static const tf2::Matrix3x3 tf_orb_to_ros(  1, 0, 0,    // ORB X -> ROS X
+                                                0, 1, 0,    // ORB Y -> ROS Y
+                                                0, 0, 1 ); // ORB Z -> ROS Z
 
-    // Log chosen matrix
-    tf2::Vector3 r0 = tf_orb_to_ros.getRow(0);
-    tf2::Vector3 r1 = tf_orb_to_ros.getRow(1);
-    tf2::Vector3 r2 = tf_orb_to_ros.getRow(2);
-    // RCLCPP_INFO(this->get_logger(), "tf_orb_to_ros (ENU_publish=%s):\n[ %f %f %f ]\n[ %f %f %f ]\n[ %f %f %f ]",
-    //             enu_pub ? "true" : "false",
-    //             r0.x(), r0.y(), r0.z(),
-    //             r1.x(), r1.y(), r1.z(),
-    //             r2.x(), r2.y(), r2.z());
+    // static const tf2::Matrix3x3 tf_orb_to_ros(  0, 0, 1,    // ORB X -> ROS X
+    //                                             -1, 0, 0,    // ORB Y -> ROS Y
+    //                                             0, -1, 0 ); // ORB Z -> ROS Z                   
 
     // Transform from orb coordinate system to ros coordinate system on camera coordinates
     tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
     tf_camera_translation = tf_orb_to_ros * tf_camera_translation;
-
-    //Inverse matrix
-    tf_camera_rotation = tf_camera_rotation.transpose();
-    tf_camera_translation = (tf_camera_rotation*tf_camera_translation);
-
-    //Transform from orb coordinate system to ros coordinate system on map coordinates
-    tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
-    tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
 
     // Return the final tf2::Transform
     return tf2::Transform(tf_camera_rotation, tf_camera_translation);
