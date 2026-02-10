@@ -8,107 +8,14 @@
 #include <unistd.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "stereo-inertial-node.hpp"
+#include "stereo_inertial.hpp"
 #include "System.h"
 
 using std::placeholders::_1;
 
-// CSV Global Variables
-namespace {
-    std::ofstream csvFile;
-    int fileCounter = 1;
-    bool csvInitialized = false;
-    std::string csvPath;
-    ORB_SLAM3::System* pSLAM_global = nullptr;
-}
 
-void InitializeCSV() {
-    std::string documentsPath = std::string(getenv("HOME")) + "/Documents";
-    std::string mainFolder = documentsPath + "/timestampeposicao";
-    std::string subFolder = mainFolder + "/STEREOINERTIAL";
-    
-    auto createDir = [](const std::string& path) {
-        struct stat info;
-        if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
-            mkdir(path.c_str(), 0777);
-        }
-    };
-    
-    createDir(mainFolder);
-    createDir(subFolder);
-    
-    do {
-        std::stringstream ss;
-        ss << subFolder << "/" << std::setw(4) << std::setfill('0') << fileCounter << ".csv";
-        csvPath = ss.str();
-        if (access(csvPath.c_str(), F_OK) != -1) {
-            fileCounter++;
-        } else {
-            break;
-        }
-    } while (true);
-    
-    csvFile.open(csvPath);
-    if (csvFile.is_open()) {
-        csvFile << "timestamp_left,timestamp_right,pos_x,pos_y,pos_z,quat_x,quat_y,quat_z,quat_w,rot_x,rot_y,rot_z\n";
-        csvInitialized = true;
-    }
-}
 
-void CreateDirectoryIfNotExists(const std::string& path) {
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
-        mkdir(path.c_str(), 0777);
-    }
-}
 
-void SaveStereoInertialData() {
-    if(!pSLAM_global) return;
-    
-    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/stereo_inertial";
-    CreateDirectoryIfNotExists(output_dir);
-    
-    pSLAM_global->SaveMapPoints(output_dir + "/map_points.ply");
-    pSLAM_global->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
-    pSLAM_global->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
-    
-    if (csvFile.is_open()) {
-        csvFile.close();
-    }
-}
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-    if(argc < 4)
-    {
-        std::cerr << "\nUsage: ros2 run orbslam stereo path_to_vocabulary path_to_settings do_rectify use_pangolin" << std::endl;
-        rclcpp::shutdown();
-        return 1;
-    }
-    bool visualization = true;
-
-    InitializeCSV();
-
-    auto node = std::make_shared<rclcpp::Node>("orb_slam");
-
-    ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, visualization);
-    pSLAM_global = &pSLAM;
-
-    std::shared_ptr<StereoInertialNode> slam_ros;
-    slam_ros = std::make_shared<StereoInertialNode>(&pSLAM, node.get(), argv[2], argv[3], argv[4]);
-    std::cout << "============================" << std::endl;
-
-    rclcpp::on_shutdown([&]() {
-        SaveStereoInertialData();
-        pSLAM.Shutdown();
-    });
-
-    rclcpp::spin(slam_ros->get_node_base_interface());
-    rclcpp::shutdown();
-
-    return 0;
-}
 
 StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* node ,const std::string &strSettingsFile, const std::string &strDoRectify, const std::string &strDoEqual) :
     SlamNode(pSLAM, node)
@@ -259,18 +166,6 @@ void StereoInertialNode::SyncWithImu()
             SE3 = m_SLAM->TrackStereo(imLeft, imRight, tImLeft, vImuMeas);
             
             // CSV Logging
-            if (csvInitialized && SE3.matrix() != Eigen::Matrix4f::Identity()) {
-                Eigen::Vector3f translation = SE3.translation();
-                Eigen::Quaternionf quat(SE3.rotationMatrix());
-                Eigen::Vector3f euler = SE3.rotationMatrix().eulerAngles(0, 1, 2);
-                
-                csvFile << std::fixed << std::setprecision(6) 
-                       << tImLeft << "," << tImRight << ","
-                       << translation.x() << "," << translation.y() << "," << translation.z() << ","
-                       << quat.x() << "," << quat.y() << "," << quat.z() << "," << quat.w() << ","
-                       << euler.x() << "," << euler.y() << "," << euler.z() << "\n";
-                csvFile.flush();
-            }
             
             Update();
             TrackedImage(imLeft);

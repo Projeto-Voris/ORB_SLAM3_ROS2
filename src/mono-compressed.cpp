@@ -5,7 +5,7 @@
 #include <sys/stat.h> // Para mkdir
 
 #include "rclcpp/rclcpp.hpp"
-#include "monocular-compressed-slam-node.hpp"
+#include "monocular_compressed.hpp"
 
 #include "System.h"
 

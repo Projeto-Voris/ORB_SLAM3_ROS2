@@ -5,7 +5,7 @@
 #include <sys/stat.h> // Para mkdir
 
 #include "rclcpp/rclcpp.hpp"
-#include "mono-inertial-compressed-node.hpp"
+#include "mono_inertial_compressed.hpp"
 
 #include "System.h"
 

@@ -28,7 +28,7 @@
 #include "message_filters/sync_policies/approximate_time.h"
 
 
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <string> 
 #include <opencv2/opencv.hpp>
 #include "System.h"
@@ -37,6 +37,16 @@
 #include "Tracking.h"
 #include "utility.hpp"
 #include "std_srvs/srv/trigger.hpp"
+
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <chrono>
+#include <sys/stat.h>
+#include <string>
+
+#include "System.h"
+
 
 class SlamNode : public rclcpp::Node
 {
@@ -52,6 +62,8 @@ public:
     void PublishTransform();
     void TrackedImage(const cv::Mat image);
     void handleReset( const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response); 
+    void CreateDirectoryIfNotExists(const std::string& directory);
+    void SaveData();
     tf2::Transform TransformFromSophus(Sophus::SE3f &pose);
 
     rclcpp::Node* node_;

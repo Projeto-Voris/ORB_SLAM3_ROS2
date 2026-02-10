@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(orbslam3_ros2)
 
 # You should set the PYTHONPATH to your own python site-packages path
-set(ENV{PYTHONPATH} "/opt/ros/humble/lib/python3.10/site-packages")
+# set(ENV{PYTHONPATH} "/opt/ros/jazzy/lib/python3.12/site-packages")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
@@ -46,14 +46,17 @@ add_executable(mono
 ament_target_dependencies(mono rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
 add_executable(stereo
+  src/stereo_node.cpp
   src/stereo.cpp
+  src/stereo_image_saver.cpp
   src/slam_node.cc
-  #src/stereo_image_saver_node.cpp
 )
 ament_target_dependencies(stereo rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
 add_executable(stereo-inertial
-  src/stereo-inertial.cpp
+  src/stereo_inertial_node.cpp
+  src/stereo_inertial.cpp
+  src/stereo_image_saver.cpp
   src/slam_node.cc
 )
 ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
@@ -77,7 +80,7 @@ add_executable(mono-inertial-compressed
 ament_target_dependencies(mono-inertial-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
 install(TARGETS mono mono-inertial stereo stereo-inertial mono-compressed DESTINATION lib/${PROJECT_NAME})
-
+# stereo-inertial 
 # Install launch files.
 install(DIRECTORY launch config vocabulary
  DESTINATION share/${PROJECT_NAME}/)

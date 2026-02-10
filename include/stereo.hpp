@@ -21,7 +21,7 @@
 #include "message_filters/sync_policies/approximate_time.h"
 
 
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <string> 
 #include <opencv2/opencv.hpp>
 #include "System.h"
@@ -40,10 +40,9 @@ public:
     ~StereoSlamNode();
 
 private:
-    using ImageMsg = sensor_msgs::msg::Image;
     using approximate_sync_policy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image>;
 
-    void GrabStereo(const sensor_msgs::msg::Image::SharedPtr msgLeft, const sensor_msgs::msg::Image::SharedPtr msgRight);
+    void GrabStereo(const sensor_msgs::msg::Image::ConstSharedPtr msgLeft, const sensor_msgs::msg::Image::ConstSharedPtr msgRight);
 
     bool doRectify;
     bool rescale;

@@ -5,7 +5,7 @@
 #include <sys/stat.h> // Para mkdir
 
 #include "rclcpp/rclcpp.hpp"
-#include "monocular-slam-node.hpp"
+#include "monocular.hpp"
 
 #include "System.h"
 

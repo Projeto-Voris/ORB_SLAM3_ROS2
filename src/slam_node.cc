@@ -12,7 +12,7 @@ const tf2::Matrix3x3 SlamNode::tf_orb_to_ros_enu(
     0.0,-1.0, 0.0);  // row 2
 
 SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
-: Node("ORB_SLAM3_Inertial"), m_SLAM(pSLAM), node_(node)
+: Node("ORB_SLAM3_Inertial", rclcpp::NodeOptions().use_intra_process_comms(true)), m_SLAM(pSLAM), node_(node)
 {
     // tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
@@ -37,6 +37,7 @@ SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
 }
 SlamNode::~SlamNode() {
     // Para todas as threads
+    SlamNode::SaveData();
     m_SLAM->Shutdown();
 }
 void SlamNode::handleReset(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response){
@@ -427,4 +428,23 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
 
     // Return the final tf2::Transform
     return tf2::Transform(tf_camera_rotation, tf_camera_translation);
+}
+
+void SlamNode::CreateDirectoryIfNotExists(const std::string& path) {
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
+        mkdir(path.c_str(), 0777);
+    }
+}
+
+void SlamNode::SaveData() {
+    if(!m_SLAM) return;
+    
+    const std::string output_dir = std::string(getenv("HOME")) + "/Documents/results/";
+    CreateDirectoryIfNotExists(output_dir);
+    
+    // Salva todos os dados implementados
+    m_SLAM->SaveMapPoints(output_dir + "/map_points.ply");
+    m_SLAM->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
+    m_SLAM->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
 }
