@@ -11,52 +11,36 @@
 
 using std::placeholders::_1;
 
-// Variável global para acesso ao SLAM
-ORB_SLAM3::System* pSLAM_global = nullptr;
-
-// Função para criar diretório se não existir
-void CreateDirectoryIfNotExists(const std::string& path) {
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR)) {
-        mkdir(path.c_str(), 0777);
-    }
-}
-
-// Função para salvamento dos dados
-void SaveMonoData() {
-    if(!pSLAM_global) return;
-    
-    const std::string output_dir = std::string(getenv("HOME")) + "/ros2_ws/src/orbslam3_ros2/results/mono";
-    CreateDirectoryIfNotExists(output_dir);
-    
-    // Salva todos os dados implementados
-    pSLAM_global->SaveMapPoints(output_dir + "/map_points.ply");
-    pSLAM_global->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
-    pSLAM_global->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
-}
-
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
     if(argc < 4)
     {
-        std::cerr << "\nUsage: ros2 run orbslam mono path_to_vocabulary path_to_settings use_pangolin" << std::endl;
+        std::cerr << "\nUsage: ros2 run orbslam stereo path_to_vocabulary path_to_settings do_rectify [--with-saver]\n"
+                  << "  add --with-saver to run an image-saver node in the same process (intra-process zero-copy)\n";
         return 1;
     }
     bool visualization = false;
 
-    auto node = std::make_shared<rclcpp::Node>("run_slam");
+    bool run_saver_in_process = false;
+    for (int i = 4; i < argc; ++i) {
+        std::string a = argv[i];
+        if (a == "--with-saver" || a == "--inproc-saver") {
+            run_saver_in_process = true;
+        }
+    }
 
+    auto node = std::make_shared<rclcpp::Node>("run_slam");
+    rclcpp::NodeOptions options;
+    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
     // Create SLAM system
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, visualization);
-    pSLAM_global = &pSLAM; // Atribui à variável global
 
-    auto slam_node = std::make_shared<MonocularSlamNode>(&pSLAM, node.get());
+    auto slam_node = std::make_shared<MonocularSlamNode>(&pSLAM, node.get(), options);
     std::cout << "============================ " << std::endl;
 
     // Configura o handler para salvar dados no shutdown
     rclcpp::on_shutdown([&]() {
-        SaveMonoData();
         pSLAM.Shutdown();
     });
 
@@ -68,8 +52,8 @@ int main(int argc, char **argv)
 
 
 
-MonocularSlamNode::MonocularSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node)
-:   SlamNode(pSLAM, node)
+MonocularSlamNode::MonocularSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options)
+:   SlamNode(pSLAM, node, options)
 {
     this->declare_parameter<bool>("rescale", false);
     this->get_parameter("rescale", rescale);

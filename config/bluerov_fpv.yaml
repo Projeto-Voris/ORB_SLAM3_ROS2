@@ -9,17 +9,16 @@ Camera.type: "PinHole"
 
 # Camera calibration and distortion parameters (OpenCV) 
 # Left Camera calibration and distortion parameters (OpenCV)
-Camera1.fx: 432.25
-Camera1.fy: 575.48
-Camera1.cx: 404.28
-Camera1.cy: 324.18
+Camera1.fx: 1032.7
+Camera1.fy: 1032.0
+Camera1.cx: 970.8508
+Camera1.cy: 582.0877
 
-Camera1.k1: -0.0064854 
-Camera1.k2: 0.057725
-Camera1.k3: -0.050968
-Camera1.p1:-0.0013121
-Camera1.p2: -0.0018103
-
+Camera1.k1: -0.0127 
+Camera1.k2: 0.0704
+Camera1.k3: -0.0580
+Camera1.p1: -0.00044517 
+Camera1.p2: -0.0013
 
 # Camera frames per second 
 Camera.fps: 30
@@ -28,8 +27,8 @@ Camera.fps: 30
 Camera.RGB: 0
 
 # Camera resolution
-Camera.width: 800
-Camera.height: 600
+Camera.width: 1920
+Camera.height: 1080
 
 Stereo.ThDepth: 60.0
 
@@ -54,7 +53,7 @@ IMU.Frequency: 100.0
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1500
+ORBextractor.nFeatures: 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid     
 ORBextractor.scaleFactor: 1.2
@@ -67,7 +66,7 @@ ORBextractor.nLevels: 8
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast            
 ORBextractor.iniThFAST: 18
-ORBextractor.minThFAST: 6
+ORBextractor.minThFAST: 10
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

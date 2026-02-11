@@ -6,7 +6,7 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     return LaunchDescription([
-            DeclareLaunchArgument(
+        DeclareLaunchArgument(
             'vocabulary',
             default_value=PathJoinSubstitution([
                 FindPackageShare('orbslam3_ros2'),
@@ -42,7 +42,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'child_frame_id',
-            default_value='Passive/left_camera_link',
+            default_value='Passive/left_camera_enu_link',
             description='link of SLAM frame'
         ),
         DeclareLaunchArgument(
@@ -60,12 +60,11 @@ def generate_launch_description():
             default_value='True',
             description='Publish tracked image'
         ),
-    
         Node(
             package='orbslam3_ros2',
             executable='mono-inertial-compressed',
-            name='mono_inertial_compressed_orbslam3',
             namespace=LaunchConfiguration('namespace'),
+            name='mono_orbslam3',
             output='screen',
             arguments=[
                 LaunchConfiguration('vocabulary'),
@@ -75,9 +74,7 @@ def generate_launch_description():
                     LaunchConfiguration('yaml_file')  # Use the file name directly
                 ]),
                 LaunchConfiguration('pangolin')
-                
             ],
-
             parameters=[{'rescale': LaunchConfiguration('rescale'),
                         'tracked_points': LaunchConfiguration('tracked_points'),
                         'parent_frame_id': LaunchConfiguration('parent_frame_id'),
@@ -85,8 +82,9 @@ def generate_launch_description():
                         'frame_id': LaunchConfiguration('frame_id'),
                         'ENU_publish': LaunchConfiguration('ENU_publish')}],
             remappings=[
-                ('camera/compressed', '/Passive/image_raw/compressed'),
-                ('imu', '/mavros/imu/data_raw')  # Assuming you want to remap the IMU topic as well
+                ('camera/compressed', '/bluerov2/image_raw/compressed'),
+                ('imu', '/mavros/imu/data_raw')  # Remap the camera topic to the video frames topic
+                #('pose', '/mavros/vision_pose/pose'),
             ]
         )
     ])

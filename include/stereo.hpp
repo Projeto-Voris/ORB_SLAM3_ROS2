@@ -35,7 +35,7 @@
 class StereoSlamNode : public SlamNode
 {
 public:
-    StereoSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, const std::string &strSettingsFile, const std::string &strDoRectify);
+    StereoSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify);
 
     ~StereoSlamNode();
 

@@ -26,7 +26,7 @@
 class MonoInertialNode : public SlamNode
 {
 public:
-    MonoInertialNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node);
+    MonoInertialNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options);
     ~MonoInertialNode();
 
 private:

@@ -51,7 +51,7 @@
 class SlamNode : public rclcpp::Node
 {
 public:
-    SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node);
+    SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options);
 
     ~SlamNode();
     void Update();
@@ -85,6 +85,8 @@ protected:
 
     tf2::Transform initial_map_base_offset_;
     bool initial_offset_set_ = false;
+    bool tf_static_cached_{false};
+    tf2::Transform T_base_cam_;
 
 private:
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr posepublisher;

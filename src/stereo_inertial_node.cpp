@@ -31,10 +31,12 @@ int main(int argc, char **argv)
     }
 
     auto node = std::make_shared<rclcpp::Node>("run_slam");
+    rclcpp::NodeOptions options;
+    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
 
     ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, visualization);
-    auto slam_node = std::make_shared<StereoInertialNode>(&pSLAM, node.get(), argv[2], argv[3], argv[4]);
-    auto saver_node = std::make_shared<StereoImageSaverNode>();
+    auto slam_node = std::make_shared<StereoInertialNode>(&pSLAM, node.get(), options, argv[2], argv[3], argv[4]);
+    auto saver_node = std::make_shared<StereoImageSaverNode>(options);
     std::cout << "============================ " << std::endl;
 
     rclcpp::on_shutdown([&]() {

@@ -62,11 +62,11 @@ Stereo.T_c1_c2: !!opencv-matrix
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
 
-ORBextractor.nFeatures: 1500
+ORBextractor.nFeatures: 1200
 ORBextractor.scaleFactor: 1.2
 ORBextractor.nLevels: 8
-ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 7
+ORBextractor.iniThFAST: 30
+ORBextractor.minThFAST: 10
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

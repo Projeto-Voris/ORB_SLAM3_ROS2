@@ -42,7 +42,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'child_frame_id',
-            default_value='Passive/left_camera_link',
+            default_value='Passive/left_camera_enu_link',
             description='link of SLAM frame'
         ),
         DeclareLaunchArgument(
@@ -82,7 +82,7 @@ def generate_launch_description():
                         'frame_id': LaunchConfiguration('frame_id'),
                         'ENU_publish': LaunchConfiguration('ENU_publish')}],
             remappings=[
-                ('camera', '/bluerov/camera/image_raw/compressed'),  # Remap the camera topic to the video frames topic
+                ('camera/compressed', '/bluerov2/image_raw/compressed'),  # Remap the camera topic to the video frames topic
                 #('pose', '/mavros/vision_pose/pose'),
             ]
         )

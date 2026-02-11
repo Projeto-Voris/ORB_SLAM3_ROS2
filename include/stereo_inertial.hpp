@@ -24,7 +24,7 @@
 class StereoInertialNode : public SlamNode
 {
 public:
-    StereoInertialNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, const std::string &strSettingsFile, const std::string &strDoRectify , const std::string &strDoEqual);
+    StereoInertialNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify , const std::string &strDoEqual);
     ~StereoInertialNode();
 
 private:
