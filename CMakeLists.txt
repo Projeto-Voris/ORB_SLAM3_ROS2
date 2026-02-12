@@ -17,6 +17,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
@@ -39,49 +40,144 @@ link_directories(
   include
 )
 
-add_executable(mono
-  src/mono.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(mono rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(mono
+#   src/mono.cpp
+#   src/slam_node.cc    
+# )
+# ament_target_dependencies(mono rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-add_executable(stereo
-  src/stereo_node.cpp
-  src/stereo.cpp
-  src/stereo_image_saver.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(stereo rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(stereo
+#   src/stereo_node.cpp
+#   src/stereo.cpp
+#   src/stereo_image_saver.cpp
+#   src/slam_node.cc
+# )
+# ament_target_dependencies(stereo rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-add_executable(stereo-inertial
-  src/stereo_inertial_node.cpp
-  src/stereo_inertial.cpp
-  src/stereo_image_saver.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(stereo-inertial
+#   src/stereo_inertial_node.cpp
+#   src/stereo_inertial.cpp
+#   src/stereo_image_saver.cpp
+#   src/slam_node.cc
+# )
+# ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-add_executable(mono-inertial
-  src/mono-inertial.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(mono-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(mono-inertial
+#   src/mono-inertial.cpp
+#   src/slam_node.cc
+# )
+# ament_target_dependencies(mono-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-add_executable(mono-compressed
-  src/mono-compressed.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(mono-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(mono-compressed
+#   src/mono-compressed.cpp
+#   src/slam_node.cc
+# )
+# ament_target_dependencies(mono-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-add_executable(mono-inertial-compressed
-  src/mono-inertial-compressed.cpp
-  src/slam_node.cc
-)
-ament_target_dependencies(mono-inertial-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
+# add_executable(mono-inertial-compressed
+#   src/mono-inertial-compressed.cpp
+#   src/slam_node.cc
+# )
+# ament_target_dependencies(mono-inertial-compressed rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs)
 
-install(TARGETS mono mono-inertial stereo stereo-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
-# stereo-inertial 
-# Install launch files.
+add_library(stereo_slam_component SHARED src/stereo.cpp src/slam_node.cc)
+
+# Dependências ROS 2
+ament_target_dependencies(stereo_slam_component 
+  rclcpp 
+  rclcpp_components 
+  sensor_msgs 
+  cv_bridge 
+  message_filters # Necessário para a sincronização estéreo
+  tf2_geometry_msgs 
+  tf2_ros 
+  nav_msgs 
+  std_srvs
+  ORB_SLAM3 Pangolin OpenCV
+)
+
+# Linkagem de bibliotecas externas (CRÍTICO: Sem isso dá erro de "undefined symbol" ao rodar)
+target_link_libraries(stereo_slam_component 
+  ${ORB_SLAM3_LIBRARIES} 
+  ${Pangolin_LIBRARIES} 
+  ${OpenCV_LIBS}
+  ${Sophus_LIBRARIES}
+)
+
+# Registro do Plugin
+rclcpp_components_register_node(stereo_slam_component 
+  PLUGIN "orbslam3_ros2::StereoSlamNode" 
+  EXECUTABLE stereo_slam_node
+)
+# Stereo Inertial SLAM Component
+add_library(stereo_inertial_slam_component SHARED src/stereo_inertial.cpp src/slam_node.cc)
+
+ament_target_dependencies(stereo_inertial_slam_component 
+  rclcpp 
+  rclcpp_components 
+  sensor_msgs 
+  cv_bridge 
+  message_filters # Necessário para a sincronização estéreo
+  tf2_geometry_msgs 
+  tf2_ros 
+  nav_msgs 
+  std_srvs
+  ORB_SLAM3 Pangolin OpenCV
+)
+
+# Linkagem de bibliotecas externas (CRÍTICO: Sem isso dá erro de "undefined symbol" ao rodar)
+target_link_libraries(stereo_inertial_slam_component 
+  ${ORB_SLAM3_LIBRARIES} 
+  ${Pangolin_LIBRARIES} 
+  ${OpenCV_LIBS}
+  ${Sophus_LIBRARIES}
+)
+
+# Registro do Plugin
+rclcpp_components_register_node(stereo_inertial_slam_component 
+  PLUGIN "orbslam3_ros2::StereoInertialSlamNode" 
+  EXECUTABLE stereo_inertial_slam_node
+)
+
+
+# 2. Componente do Saver (Gravação de Imagens)
+add_library(stereo_saver_component SHARED src/stereo_image_saver.cpp)
+
+ament_target_dependencies(stereo_saver_component 
+  rclcpp 
+  rclcpp_components 
+  cv_bridge 
+  sensor_msgs 
+  message_filters
+  ORB_SLAM3 Pangolin OpenCV
+)
+
+target_link_libraries(stereo_saver_component 
+  ${OpenCV_LIBS}
+)
+
+rclcpp_components_register_node(stereo_saver_component 
+  PLUGIN "orbslam3_ros2::StereoImageSaverNode" 
+  EXECUTABLE stereo_saver_node
+)
+
+# ==============================================================================
+# INSTALAÇÃO
+# ==============================================================================
+
+# 1. Instalar as bibliotecas dos componentes (ESSENCIAL para o Launch achar)
+install(TARGETS 
+  stereo_slam_component 
+  stereo_inertial_slam_component
+  stereo_saver_component
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# # install(TARGETS mono mono-inertial stereo stereo-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
+# # stereo-inertial 
+# # Install launch files.
 install(DIRECTORY launch config vocabulary
  DESTINATION share/${PROJECT_NAME}/)
 

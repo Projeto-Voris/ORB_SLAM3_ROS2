@@ -1,5 +1,8 @@
 #include "slam_node.hpp"
 
+
+namespace orbslam3_ros2
+{
 // Define static const matrices declared in header
 const tf2::Matrix3x3 SlamNode::tf_orb_to_ros_default(
     1.0, 0.0, 0.0,   // row 0
@@ -10,9 +13,10 @@ const tf2::Matrix3x3 SlamNode::tf_orb_to_ros_enu(
     0.0, 0.0, 1.0,   // row 0
    -1.0, 0.0, 0.0,   // row 1
     0.0,-1.0, 0.0);  // row 2
+    
 
-SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options)
-: Node("ORB_SLAM3", options), m_SLAM(pSLAM), node_(node)
+SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, const rclcpp::NodeOptions & options)
+: Node("ORB_SLAM3", options), m_SLAM(pSLAM)
 {
     // tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
@@ -38,7 +42,7 @@ SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOpt
 SlamNode::~SlamNode() {
     // Para todas as threads
     SlamNode::SaveData();
-    m_SLAM->Shutdown();
+
 }
 void SlamNode::handleReset(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response){
     m_SLAM->Reset();
@@ -386,4 +390,5 @@ void SlamNode::SaveData() {
     m_SLAM->SaveMapPoints(output_dir + "/map_points.ply");
     m_SLAM->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
     m_SLAM->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
+}
 }

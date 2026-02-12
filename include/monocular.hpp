@@ -18,7 +18,7 @@
 class MonocularSlamNode : public SlamNode
 {
 public:
-    MonocularSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options);
+    MonocularSlamNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
     ~MonocularSlamNode();
 

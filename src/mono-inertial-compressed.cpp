@@ -14,15 +14,7 @@ using std::placeholders::_1;
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    if(argc < 4)
-    {
-        std::cerr << "\nUsage: ros2 run orbslam stereo path_to_vocabulary path_to_settings do_rectify [--with-saver]\n"
-                  << "  add --with-saver to run an image-saver node in the same process (intra-process zero-copy)\n";
-        return 1;
-    }
-    bool visualization = false;
 
-    bool run_saver_in_process = false;
     for (int i = 4; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--with-saver" || a == "--inproc-saver") {
@@ -34,15 +26,9 @@ int main(int argc, char **argv)
     rclcpp::NodeOptions options;
     options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
 
-    ORB_SLAM3::System pSLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_MONOCULAR, visualization);
 
-    auto slam_node = std::make_shared<MonoInertialCompressedNode>(&pSLAM, node.get(), options);
+    auto slam_node = std::make_shared<MonoInertialCompressedNode>(options);
     std::cout << "============================" << std::endl;
-
-    // Configura o handler para salvar dados no shutdown
-    rclcpp::on_shutdown([&]() {
-        pSLAM.Shutdown();
-    });
 
     rclcpp::spin(slam_node);
     rclcpp::shutdown();
@@ -50,9 +36,26 @@ int main(int argc, char **argv)
     return 0;
 }
 
-MonoInertialCompressedNode::MonoInertialCompressedNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options) :
-    SlamNode(pSLAM, node, options)
+MonoInertialCompressedNode::MonoInertialCompressedNode(const rclcpp::NodeOptions & options) :
+    SlamNode(nullptr, options)
 {
+    RCLCPP_INFO(this->get_logger(), "Inicializando CompressedSlamNode...");
+    this->declare_parameter<std::string>("voc_file", "");
+    this->declare_parameter<std::string>("settings_file", "");
+    this->declare_parameter<bool>("do_rectify", true);
+    this->declare_parameter<bool>("rescale", false);
+    std::string strVocFile= this->get_parameter("voc_file").as_string();
+    std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
+    this->get_parameter("rescale", rescale);
+
+    if (strVocFile.empty() || strSettingsFile.empty()) {
+        RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
+        rclcpp::shutdown();
+        return;
+    }
+
+    // ORB_SLAM3::System::STEREO = 1
+    m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::IMU_MONOCULAR, false);
     auto imu_qos_profile = rclcpp::SensorDataQoS();
     auto img_qos_profile = rclcpp::SensorDataQoS();
     imu_qos_profile.keep_last(100);

@@ -1,5 +1,5 @@
-#ifndef __SLAM_NODE_HPP__
-#define __SLAM_NODE_HPP__
+#ifndef __SLAM_HPP__
+#define __SLAM_HPP__
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -47,11 +47,12 @@
 
 #include "System.h"
 
-
+namespace orbslam3_ros2
+{
 class SlamNode : public rclcpp::Node
 {
 public:
-    SlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options);
+    SlamNode(ORB_SLAM3::System* pSLAM, const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
     ~SlamNode();
     void Update();
@@ -66,26 +67,23 @@ public:
     void SaveData();
     tf2::Transform TransformFromSophus(Sophus::SE3f &pose);
 
-    rclcpp::Node* node_;
     static const tf2::Matrix3x3 tf_orb_to_ros_enu;
     static const tf2::Matrix3x3 tf_orb_to_ros_default;
 
 protected:
-    // using ImageMsg = sensor_msgs::msg::Image;
-
     ORB_SLAM3::System* m_SLAM;
     std::vector<ORB_SLAM3::KeyFrame*> trajectory;
     std::vector<ORB_SLAM3::MapPoint*> map_points;
     Sophus::SE3f SE3;
-    rclcpp::Time current_frame_time_;
-    // rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr tf_publisher;
+
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
-    tf2::Transform initial_map_base_offset_;
+    
     bool initial_offset_set_ = false;
     bool tf_static_cached_{false};
+    rclcpp::Time current_frame_time_;
+    tf2::Transform initial_map_base_offset_; 
     tf2::Transform T_base_cam_;
 
 private:
@@ -98,5 +96,5 @@ private:
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr resetservice;
 
 };
-
+}
 #endif

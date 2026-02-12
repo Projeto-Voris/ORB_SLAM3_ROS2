@@ -2,6 +2,7 @@
 #define __STEREO_INERTIAL_NODE_HPP__
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
@@ -21,11 +22,13 @@
 #include "utility.hpp"
 #include "slam_node.hpp"
 #include <queue>
+namespace orbslam3_ros2
+{
 class StereoInertialNode : public SlamNode
 {
 public:
-    StereoInertialNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify , const std::string &strDoEqual);
-    ~StereoInertialNode();
+    StereoInertialNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+    ~StereoInertialNode() override;
 
 private:
     void GrabImu(const sensor_msgs::msg::Imu::SharedPtr msg);
@@ -44,7 +47,6 @@ private:
     // rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr tf_publisher;
     // rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;
 
-    ORB_SLAM3::System *SLAM_;
     std::thread *syncThread_;
 
     // IMU
@@ -55,12 +57,9 @@ private:
     queue<sensor_msgs::msg::Image::SharedPtr> imgLeftBuf_, imgRightBuf_;
     std::mutex bufMutexLeft_, bufMutexRight_;
 
-    bool doRectify_;
-    bool doEqual_;
-    cv::Mat M1l_, M2l_, M1r_, M2r_;
-
-    bool bClahe_;
-    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE(3.0, cv::Size(8, 8));
+    bool doRectify;
+    bool rescale;
 };
+}
 
 #endif

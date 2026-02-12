@@ -2,6 +2,7 @@
 #define __STEREO_IMAGE_SAVER_NODE_HPP__
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 #include "sensor_msgs/msg/image.hpp"
 #include "message_filters/subscriber.h"
 #include "message_filters/synchronizer.h"
@@ -11,14 +12,15 @@
 #include <cv_bridge/cv_bridge.hpp>
 #include <string> 
 #include <opencv2/opencv.hpp>
-
+namespace orbslam3_ros2
+{
 class StereoImageSaverNode : public rclcpp::Node
 {
     public:
         // Simple node wrapper used as a base for the implementation in the .cpp.
         // Provide an inline default constructor so translation units that include
         // this header don't require a separate definition.
-        StereoImageSaverNode(rclcpp::NodeOptions options);
+        StereoImageSaverNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
         ~StereoImageSaverNode() = default;
         void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr &msgLeft, 
                             const sensor_msgs::msg::Image::ConstSharedPtr &msgRight);
@@ -34,5 +36,5 @@ class StereoImageSaverNode : public rclcpp::Node
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr state_sub_;
 
 };
-
+}
 #endif

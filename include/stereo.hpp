@@ -1,7 +1,8 @@
-#ifndef __STEREO_SLAM_NODE_HPP__
-#define __STEREO_SLAM_NODE_HPP__
+#ifndef __STEREO_HPP__
+#define __STEREO_HPP__
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 #include "sensor_msgs/msg/image.hpp"
 
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -31,32 +32,33 @@
 #include "utility.hpp"
 
 #include "slam_node.hpp"
-
+namespace orbslam3_ros2
+{
 class StereoSlamNode : public SlamNode
 {
 public:
-    StereoSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify);
-
-    ~StereoSlamNode();
+    // StereoSlamNode(ORB_SLAM3::System* pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify);
+    StereoSlamNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+    ~StereoSlamNode() override;
 
 private:
     using approximate_sync_policy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image>;
 
     void GrabStereo(const sensor_msgs::msg::Image::ConstSharedPtr msgLeft, const sensor_msgs::msg::Image::ConstSharedPtr msgRight);
+    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> left_sub;
+    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> right_sub;
+    std::shared_ptr<message_filters::Synchronizer<approximate_sync_policy>> syncApproximate;
 
     bool doRectify;
     bool rescale;
-    cv::Mat M1l, M2l, M1r, M2r;
+    // cv::Mat M1l, M2l, M1r, M2r;
 
 
     cv::Mat imLeft;
     cv::Mat imRight;
 
-    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> left_sub;
-    std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> right_sub;
-
-    std::shared_ptr<message_filters::Synchronizer<approximate_sync_policy>> syncApproximate;
 
 };
+}
 
 #endif

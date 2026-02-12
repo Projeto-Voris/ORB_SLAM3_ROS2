@@ -15,20 +15,30 @@ using std::placeholders::_1;
 
 
 
-
-
-StereoInertialNode::StereoInertialNode(ORB_SLAM3::System *pSLAM, rclcpp::Node* node, rclcpp::NodeOptions options, const std::string &strSettingsFile, const std::string &strDoRectify, const std::string &strDoEqual) :
-    SlamNode(pSLAM, node, options)
+namespace orbslam3_ros2
 {
-    stringstream ss_rec(strDoRectify);
-    ss_rec >> boolalpha >> doRectify_;
+StereoInertialNode::StereoInertialNode(const rclcpp::NodeOptions & options) :
+    SlamNode(nullptr, options)
+{
+    RCLCPP_INFO(this->get_logger(), "Inicializando StereoInertialSlamNode...");
+    this->declare_parameter<std::string>("voc_file", "");
+    this->declare_parameter<std::string>("settings_file", "");
+    this->declare_parameter<bool>("do_rectify", true);
+    this->declare_parameter<bool>("rescale", false);
+    std::string strVocFile= this->get_parameter("voc_file").as_string();
+    std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
+    this->get_parameter("rescale", rescale);
+    this->get_parameter("do_rectify", doRectify);
 
-    stringstream ss_eq(strDoEqual);
-    ss_eq >> boolalpha >> doEqual_;
+    if (strVocFile.empty() || strSettingsFile.empty()) {
+        RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
+        rclcpp::shutdown();
+        return;
+    }
 
-    bClahe_ = doEqual_;
-    std::cout << "Rectify: " << doRectify_ << std::endl;
-    std::cout << "Equal: " << doEqual_ << std::endl;
+    // ORB_SLAM3::System::STEREO = 1
+    m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::IMU_STEREO, false);
+    
 
     subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu", 100, std::bind(&StereoInertialNode::GrabImu, this, _1));
     subImgLeft_ = this->create_subscription<sensor_msgs::msg::Image>("camera/left", 10, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
@@ -41,8 +51,7 @@ StereoInertialNode::~StereoInertialNode()
 {
     syncThread_->join();
     delete syncThread_;
-    SLAM_->Shutdown();
-    SLAM_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    m_SLAM->Shutdown();
 }
 
 void StereoInertialNode::GrabImu(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -74,11 +83,16 @@ cv::Mat StereoInertialNode::GetImage(const sensor_msgs::msg::Image::SharedPtr ms
 {
     cv_bridge::CvImageConstPtr cv_ptr;
     cv::Mat resized_img;
-
+    rescale = this->get_parameter("rescale").as_bool();
     try
     {
         cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-        cv::resize(cv_ptr->image, resized_img, cv::Size(800, 600), cv::INTER_LINEAR);
+        if (rescale){
+        cv::resize(cv_ptr->image, resized_img, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
+        }
+        else{
+            resized_img = cv_ptr->image;
+        }
     }
     catch (cv_bridge::Exception &e)
     {
@@ -151,18 +165,6 @@ void StereoInertialNode::SyncWithImu()
             }
             bufMutex_.unlock();
 
-            if (bClahe_)
-            {
-                clahe_->apply(imLeft, imLeft);
-                clahe_->apply(imRight, imRight);
-            }
-
-            if (doRectify_)
-            {
-                cv::remap(imLeft, imLeft, M1l_, M2l_, cv::INTER_LINEAR);
-                cv::remap(imRight, imRight, M1r_, M2r_, cv::INTER_LINEAR);
-            }
-
             SE3 = m_SLAM->TrackStereo(imLeft, imRight, tImLeft, vImuMeas);
             
             // CSV Logging
@@ -173,3 +175,5 @@ void StereoInertialNode::SyncWithImu()
         }
     }
 }
+}
+RCLCPP_COMPONENTS_REGISTER_NODE(orbslam3_ros2::StereoInertialNode);

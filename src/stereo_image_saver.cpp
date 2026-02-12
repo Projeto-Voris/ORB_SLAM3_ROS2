@@ -11,9 +11,9 @@
 #include <sstream>
 
 #include <unistd.h>
-#define GETPID getpid
-
-StereoImageSaverNode::StereoImageSaverNode(rclcpp::NodeOptions options)
+namespace orbslam3_ros2
+{
+StereoImageSaverNode::StereoImageSaverNode(const rclcpp::NodeOptions & options)
 : Node("stereo_image_saver_node", options), frame_count_(0)
     {
         this->declare_parameter<std::string>("save_directory", "/home/daniel/Documents/stereo_images");
@@ -65,15 +65,9 @@ void StereoImageSaverNode::imageCallback(const sensor_msgs::msg::Image::ConstSha
         std::string left_file = left_ss.str();
         std::string right_file = right_ss.str();
 
-        // cv::imwrite(left_file, cv_left->image);
-        // cv::imwrite(right_file, cv_right->image);
+        cv::imwrite(left_file, cv_left);
+        cv::imwrite(right_file, cv_right);
         // Put this process's id and the msg's pointer address on the image.
-        std::stringstream left, right;
-        left << "pid: " << GETPID() << ", ptr: " << msgLeft.get();
-        // Put this process's id and the msg's pointer address on the image.
-        right << "pid: " << GETPID() << ", ptr: " << msgRight.get();
-        RCLCPP_WARN(this->get_logger(), "Save l: %s, r: %s", left.str().c_str(), right.str().c_str());
-        // RCLCPP_INFO(this->get_logger(), "Saved frame %zu: %s, %s", frame_count_, left_file.c_str(), right_file.c_str());
         frame_count_++;
     }
     catch (const cv_bridge::Exception &e)
@@ -81,5 +75,6 @@ void StereoImageSaverNode::imageCallback(const sensor_msgs::msg::Image::ConstSha
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     }
 }
-
+}
+RCLCPP_COMPONENTS_REGISTER_NODE(orbslam3_ros2::StereoImageSaverNode);
 
