@@ -28,6 +28,10 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(orbslam3_msgs REQUIRED)
+
+# ensure message include paths pulled in automatically
+
 
 include_directories(
   include
@@ -88,11 +92,12 @@ ament_target_dependencies(stereo_slam_component
   rclcpp_components 
   sensor_msgs 
   cv_bridge 
-  message_filters # Necessário para a sincronização estéreo
+  message_filters 
   tf2_geometry_msgs 
   tf2_ros 
   nav_msgs 
   std_srvs
+  orbslam3_msgs
   ORB_SLAM3 Pangolin OpenCV
 )
 
@@ -117,11 +122,12 @@ ament_target_dependencies(stereo_inertial_slam_component
   rclcpp_components 
   sensor_msgs 
   cv_bridge 
-  message_filters # Necessário para a sincronização estéreo
+  message_filters
   tf2_geometry_msgs 
   tf2_ros 
   nav_msgs 
   std_srvs
+  orbslam3_msgs
   ORB_SLAM3 Pangolin OpenCV
 )
 

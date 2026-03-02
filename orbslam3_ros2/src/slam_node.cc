@@ -22,10 +22,10 @@ SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, const rclcpp::NodeOptions & options
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
     pathpublisher = this->create_publisher<nav_msgs::msg::Path>("path", 10);
     posepublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
-    statepublisher = this->create_publisher<std_msgs::msg::String>("state", 10);
-    flagpublisher = this->create_publisher<std_msgs::msg::Bool>("flag", 10);
+    // statepublisher = this->create_publisher<std_msgs::msg::String>("state", 10);
+    // flagpublisher = this->create_publisher<std_msgs::msg::Bool>("flag", 10);
     trackedpublisher = this->create_publisher<sensor_msgs::msg::Image>("tracked_image", 10);
-
+    status_publisher = this->create_publisher<orbslam3_msgs::msg::SlamStatus>("slam_status", 10);
     resetservice = this->create_service<std_srvs::srv::Trigger>("reset", std::bind(&SlamNode::handleReset, this, std::placeholders::_1, std::placeholders::_2));
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -56,34 +56,28 @@ void SlamNode::Update(){
         std::string base_frame_ = this->get_parameter("parent_frame_id").as_string();
         std::string cam_frame_ = this->get_parameter("child_frame_id").as_string();
         try {
-            auto tf_cam_base = tf_buffer_->lookupTransform(
+            auto tf_base_cam = tf_buffer_->lookupTransform(
                 base_frame_, cam_frame_, tf2::TimePointZero);
-            tf2::fromMsg(tf_cam_base.transform, T_base_cam_);
+            tf2::fromMsg(tf_base_cam.transform, T_base_cam_);
             tf_static_cached_ = true;
-            RCLCPP_INFO(this->get_logger(), "Transformação estática [%s -> %s] cacheada com sucesso!", base_frame_.c_str(), cam_frame_.c_str());
+            RCLCPP_INFO(this->get_logger(), "Static transform [%s -> %s] successfully cached!", base_frame_.c_str(), cam_frame_.c_str());
         } catch (const tf2::TransformException& ex) {
             RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, 
-                "Aguardando TF estática da câmera. O SLAM não publicará dados espaciais até que esteja disponível: %s", ex.what());
+                "Wait static TF to be available: %s", ex.what());
             return; // Retorna cedo pois não podemos publicar path/poses corretos sem essa TF
         }
     }
     int state_num = m_SLAM->GetTrackingState();
-    auto statemsg = std_msgs::msg::String();
-    switch (state_num) {
-        case -1: statemsg.data = "SYSTEM_NOT_READY"; break;
-        case 0:  statemsg.data = "NO_IMAGES_YET"; break;
-        case 1:  statemsg.data = "NOT_INITIALIZED"; break;
-        case 2:  statemsg.data = "OK"; break;
-        case 3:  statemsg.data = "RECENTLY_LOST"; break;
-        case 4:  statemsg.data = "LOST"; break;
-        case 5:  statemsg.data = "OK_KLT"; break;
-    }
-    
-    auto flagmsg = std_msgs::msg::Bool();
-    flagmsg.data = m_SLAM->MapChanged();
+    int map_id = m_SLAM->GetMapID();
+    bool map_changed = m_SLAM->MapChanged();
 
-    flagpublisher->publish(flagmsg);
-    statepublisher->publish(statemsg);
+    orbslam3_msgs::msg::SlamStatus status_msg;
+    status_msg.header.stamp = current_frame_time_;
+    status_msg.header.frame_id = this->get_parameter("frame_id").as_string();
+    status_msg.tracking_state = static_cast<int8_t>(state_num);
+    status_msg.map_id = map_id;
+    status_msg.map_changed = map_changed;
+    status_publisher->publish(status_msg);
     
     PublishTransform();
     PublishTrackedPointCloud();
@@ -357,17 +351,29 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
     bool enu_publish = this->get_parameter("ENU_publish").as_bool();
 
     tf2::Matrix3x3 tf_orb_to_ros = enu_publish ? tf_orb_to_ros_enu : tf_orb_to_ros_default;
-
+    
     tf2::Matrix3x3 tf_camera_rotation(
         rotation(0, 0), rotation(0, 1), rotation(0, 2),
         rotation(1, 0), rotation(1, 1), rotation(1, 2),
         rotation(2, 0), rotation(2, 1), rotation(2, 2));
-    tf2::Vector3 tf_camera_translation(
-        translation(0), translation(1), translation(2));
+        tf2::Vector3 tf_camera_translation(
+            translation(0), translation(1), translation(2));
+    // RCLCPP_INFO(this->get_logger(), "ROT matrix orb to ros:\n[%.2f, %.2f, %.2f]\n[%.2f, %.2f, %.2f]\n[%.2f, %.2f, %.2f]", 
+    //             tf_orb_to_ros.getRow(0).x(), tf_orb_to_ros.getRow(0).y(), tf_orb_to_ros.getRow(0).z(),
+    //             tf_orb_to_ros.getRow(1).x(), tf_orb_to_ros.getRow(1).y(), tf_orb_to_ros.getRow(1).z(),
+    //             tf_orb_to_ros.getRow(2).x(), tf_orb_to_ros.getRow(2).y(), tf_orb_to_ros.getRow(2).z());
 
 
     tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
     tf_camera_translation = tf_orb_to_ros * tf_camera_translation;
+
+    // // Inverse matrix
+    // tf_camera_rotation = tf_camera_rotation.transpose();
+    // tf_camera_translation = (tf_camera_rotation*tf_camera_translation);
+
+    // //Transform from orb coordinate system to ros coordinate system on map coordinates
+    // tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
+    // tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
 
     // Return the final tf2::Transform
     return tf2::Transform(tf_camera_rotation, tf_camera_translation);

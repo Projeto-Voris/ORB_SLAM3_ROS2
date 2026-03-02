@@ -27,6 +27,7 @@
 #include "message_filters/synchronizer.h"
 #include "message_filters/sync_policies/approximate_time.h"
 
+#include <orbslam3_msgs/msg/slam_status.hpp>
 
 #include <cv_bridge/cv_bridge.hpp>
 #include <string> 
@@ -90,10 +91,15 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr posepublisher;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pathpublisher;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr statepublisher;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr flagpublisher;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr trackedpublisher;
+    
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr resetservice;
+    
+    // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr statepublisher;
+    // rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr flagpublisher;
+    
+    rclcpp::Publisher<orbslam3_msgs::msg::SlamStatus>::SharedPtr status_publisher;
+
 
 };
 }
