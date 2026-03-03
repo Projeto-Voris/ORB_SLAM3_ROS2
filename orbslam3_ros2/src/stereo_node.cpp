@@ -26,15 +26,12 @@ int main(int argc, char **argv)
     rclcpp::NodeOptions options;
     options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
 
-    auto slam_node = std::make_shared<StereoSlamNode>(&pSLAM, options);
+    auto slam_node = std::make_shared<orbslam3_ros2::StereoSlamNode>(options);
     std::cout << "============================ " << std::endl;
     
-    rclcpp::on_shutdown([&]() {
-        pSLAM.Shutdown();
-    });
     
     if (run_saver_in_process) {
-        auto saver_node = std::make_shared<StereoImageSaverNode>(options);
+        auto saver_node = std::make_shared<orbslam3_ros2::StereoImageSaverNode>(options);
         // instantiate saver node with intra-process subscriptions enabled
         // StereoImageSaverImpl is the concrete implementation (defined in the cpp)
         // we create it with use_intra_process = true so its subscriptions use intra-process option

@@ -2,6 +2,8 @@
 #define __STEREO_INERTIAL_NODE_HPP__
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
+
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
@@ -22,7 +24,8 @@
 #include "slam_node.hpp"
 #include <queue>
 // using ImageMsg = sensor_msgs::msg::Image;
-
+namespace orbslam3_ros2
+{
 class MonoInertialNode : public SlamNode
 {
 public:
@@ -39,7 +42,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr   subImu_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subImg_;
 
-    ORB_SLAM3::System *SLAM_;
+    // ORB_SLAM3::System *SLAM_;
     std::thread *syncThread_;
 
     // IMU
@@ -49,6 +52,7 @@ private:
     // Image
     queue<sensor_msgs::msg::Image::SharedPtr> imgBuf_;
     std::mutex bufMutexImg_;
+    bool rescale;
 };
-
+}
 #endif

@@ -32,6 +32,7 @@
 #include "utility.hpp"
 
 #include "slam_node.hpp"
+
 namespace orbslam3_ros2
 {
 class StereoSlamNode : public SlamNode

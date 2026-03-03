@@ -15,27 +15,18 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    for (int i = 4; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "--with-saver" || a == "--inproc-saver") {
-            run_saver_in_process = true;
-        }
-    }
-    
-    auto node = std::make_shared<rclcpp::Node>("orb_slam");
     rclcpp::NodeOptions options;
-    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
+    options.use_intra_process_comms(false);
 
-
-    auto slam_node = std::make_shared<MonoInertialCompressedNode>(options);
-    std::cout << "============================" << std::endl;
+    auto slam_node = std::make_shared<orbslam3_ros2::MonoInertialCompressedNode>(options);
 
     rclcpp::spin(slam_node);
     rclcpp::shutdown();
 
     return 0;
 }
-
+namespace orbslam3_ros2
+{
 MonoInertialCompressedNode::MonoInertialCompressedNode(const rclcpp::NodeOptions & options) :
     SlamNode(nullptr, options)
 {
@@ -75,8 +66,7 @@ MonoInertialCompressedNode::~MonoInertialCompressedNode()
     delete syncThread_;
 
     // Stop all threads
-    SLAM_->Shutdown();
-
+    m_SLAM->Shutdown();
     // Save camera trajectory
     //SLAM_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 }
@@ -162,4 +152,5 @@ void MonoInertialCompressedNode::SyncWithImu()
 
 
     }
+}
 }

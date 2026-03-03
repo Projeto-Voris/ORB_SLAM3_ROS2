@@ -15,31 +15,14 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    for (int i = 4; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "--with-saver" || a == "--inproc-saver") {
-            run_saver_in_process = true;
-        }
-    }
-
     auto node = std::make_shared<rclcpp::Node>("run_slam_compressed");
     rclcpp::NodeOptions options;
-    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
+    options.use_intra_process_comms(false); // Enable intra-process communication if saver is in the same process
     // Create SLAM system
-    auto slam_node = std::make_shared<MonocularCompressedSlamNode>(options);
+    auto slam_node = std::make_shared<orbslam3_ros2::MonocularCompressedSlamNode>(options);
     std::cout << "============================ " << std::endl;
     
-    if(run_saver_in_process) {
-        // Run both in a multi-threaded executor
-        rclcpp::executors::MultiThreadedExecutor exec;
-        exec.add_node(slam_node);
-
-        RCLCPP_INFO(slam_node->get_logger(), "Running SLAM and Saver in the same process (MultiThreadedExecutor) for zero-copy intra-process transport.");
-        exec.spin();
-    } else {
-        rclcpp::spin(slam_node);
-    }
-
+    rclcpp::spin(slam_node);
 
     rclcpp::shutdown();
 
@@ -47,7 +30,8 @@ int main(int argc, char **argv)
 }
 
 
-
+namespace orbslam3_ros2
+{
 MonocularCompressedSlamNode::MonocularCompressedSlamNode(const rclcpp::NodeOptions & options)
 :   SlamNode(nullptr, options)
 {
@@ -78,7 +62,7 @@ MonocularCompressedSlamNode::MonocularCompressedSlamNode(const rclcpp::NodeOptio
 
 MonocularCompressedSlamNode::~MonocularCompressedSlamNode()
 {
-
+    m_SLAM->Shutdown();
 }
 
 void MonocularCompressedSlamNode::GrabImage(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
@@ -107,4 +91,5 @@ void MonocularCompressedSlamNode::GrabImage(const sensor_msgs::msg::CompressedIm
     SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
     Update();
     TrackedImage(img_cam);
+}
 }

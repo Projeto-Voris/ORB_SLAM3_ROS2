@@ -2,6 +2,8 @@
 #define __MONOCULAR_COMPRESSED_SLAM_NODE_HPP__
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
+
 #include "sensor_msgs/msg/compressed_image.hpp"
 
 #include <cv_bridge/cv_bridge.hpp>
@@ -14,7 +16,8 @@
 #include "utility.hpp"
 
 #include "slam_node.hpp"
-
+namespace orbslam3_ros2
+{
 class MonocularCompressedSlamNode : public SlamNode
 {
 public:
@@ -33,5 +36,5 @@ private:
 
     rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr m_image_subscriber;
 };
-
+}
 #endif

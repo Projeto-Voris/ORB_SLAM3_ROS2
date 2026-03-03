@@ -15,19 +15,10 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    bool run_saver_in_process = false;
-    for (int i = 4; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "--with-saver" || a == "--inproc-saver") {
-            run_saver_in_process = true;
-        }
-    }
-
-    auto node = std::make_shared<rclcpp::Node>("run_slam");
     rclcpp::NodeOptions options;
-    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
+    options.use_intra_process_comms(false); // Enable intra-process communication if saver is in the same process
 
-    auto slam_node = std::make_shared<MonocularSlamNode>(options);
+    auto slam_node = std::make_shared<orbslam3_ros2::MonocularSlamNode>(options);
     std::cout << "============================ " << std::endl;
 
     rclcpp::spin(slam_node);
@@ -37,7 +28,8 @@ int main(int argc, char **argv)
 }
 
 
-
+namespace orbslam3_ros2
+{
 MonocularSlamNode::MonocularSlamNode(const rclcpp::NodeOptions & options)
 :   SlamNode(nullptr, options)
 {
@@ -66,7 +58,7 @@ MonocularSlamNode::MonocularSlamNode(const rclcpp::NodeOptions & options)
 
 MonocularSlamNode::~MonocularSlamNode()
 {
-
+    m_SLAM->Shutdown();
 }
 
 void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
@@ -88,4 +80,5 @@ void MonocularSlamNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msg)
     SE3 = m_SLAM->TrackMonocular(img_cam, Utility::StampToSec(msg->header.stamp));
     Update();
     TrackedImage(img_cam);
+}
 }

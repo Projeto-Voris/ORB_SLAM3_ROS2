@@ -15,21 +15,16 @@ using std::placeholders::_1;
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    for (int i = 4; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "--with-saver" || a == "--inproc-saver") {
-            run_saver_in_process = true;
-        }
-    }
+
     
     auto node = std::make_shared<rclcpp::Node>("orb_slam");
 
     rclcpp::NodeOptions options;
-    options.use_intra_process_comms(run_saver_in_process); // Enable intra-process communication if saver is in the same process
+    options.use_intra_process_comms(false); // Enable intra-process communication if saver is in the same process
 
 
     // std::shared_ptr<MonoInertialNode> slam_ros;
-    auto slam_node = std::make_shared<MonoInertialNode>(options);
+    auto slam_node = std::make_shared<orbslam3_ros2::MonoInertialNode>(options);
     std::cout << "============================" << std::endl;
 
     rclcpp::spin(slam_node);
@@ -37,8 +32,9 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-MonoInertialNode::MonoInertialNode(rconst rclcpp::NodeOptions & options) :
+namespace orbslam3_ros2
+{
+MonoInertialNode::MonoInertialNode(const rclcpp::NodeOptions & options) :
     SlamNode(nullptr, options)
 {
     RCLCPP_INFO(this->get_logger(), "Inicializando CompressedSlamNode...");
@@ -77,7 +73,7 @@ MonoInertialNode::~MonoInertialNode()
     delete syncThread_;
 
     // Stop all threads
-    SLAM_->Shutdown();
+    m_SLAM->Shutdown();
 }
 
 void MonoInertialNode::GrabImu(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -172,4 +168,5 @@ void MonoInertialNode::SyncWithImu()
 
 
     }
+}
 }

@@ -2,6 +2,8 @@
 #define __MONO_INERTIAL_COMPRESSED_NODE_HPP__
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
+
 #include "sensor_msgs/msg/compressed_image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
@@ -21,7 +23,8 @@
 #include "utility.hpp"
 #include "slam_node.hpp"
 #include <queue>
-
+namespace orbslam3_ros2
+{
 class MonoInertialCompressedNode : public SlamNode
 {
 public:
@@ -37,7 +40,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr   subImu_;
     rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr subImg_;
 
-    ORB_SLAM3::System *SLAM_;
+    // ORB_SLAM3::System *SLAM_;
     std::thread *syncThread_;
 
     // IMU
@@ -47,6 +50,7 @@ private:
     // Image
     queue<sensor_msgs::msg::CompressedImage::SharedPtr> imgBuf_;
     std::mutex bufMutexImg_;
+    bool rescale;
 };
-
+}
 #endif
