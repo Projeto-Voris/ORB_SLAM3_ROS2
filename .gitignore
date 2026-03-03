@@ -4,3 +4,4 @@ config/isaac
 /.idea/
 /cmake-build-debug/
 */results/*.*
+ORBvoc.txt
