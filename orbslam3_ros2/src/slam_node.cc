@@ -317,7 +317,7 @@ void SlamNode::PublishTransform(){
             // Set initial offset if not set
             if (!initial_offset_set_) {
                 initial_map_base_offset_.setIdentity();
-                initial_map_base_offset_.setOrigin(T_cam_base.getOrigin());
+                initial_map_base_offset_.setOrigin(T_map_base.getOrigin());
                 initial_offset_set_ = true;
                 RCLCPP_INFO(this->get_logger(), "Publishing transform as ENU: %s", 
                             this->get_parameter("ENU_publish").as_bool() ? "true" : "false");
