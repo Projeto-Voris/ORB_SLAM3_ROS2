@@ -7,56 +7,56 @@ from launch.actions import DeclareLaunchArgument
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
-            'vocabulary',
-            default_value=PathJoinSubstitution([
-                FindPackageShare('orbslam3_ros2'),
-                'vocabulary',  # Assuming your vocab file is in the vocabulary directory
-                'ORBvoc.txt'   # Replace with your actual vocabulary file name
-            ]),
-            description='Path to the ORB_SLAM3 vocabulary file'
+            'namespace',
+            default_value='Passive',
+            description='Namespace of system'
         ),
         DeclareLaunchArgument(
-            'yaml_file',
-            default_value='25red.yaml',
-            description='Name of the ORB_SLAM3 YAML configuration file'
+            'rescale',
+            default_value='True',
+            description='Rescale Image'
         ),
-        DeclareLaunchArgument('namespace', default_value='SM2', description='namespace of node'),
-        DeclareLaunchArgument('pangolin', default_value="False", description='Use the viewer'),
-        DeclareLaunchArgument('rescale', default_value='True',  description='Rescale Image' ),
-        DeclareLaunchArgument('parent_link', default_value='SM2/base_link', description='Parent link of SLAM frame'),
-        DeclareLaunchArgument('child_link', default_value='SM2/left_camera_link', description='link of SLAM frame'),
+        DeclareLaunchArgument(
+            'parent_frame_id',
+            default_value='base_link',
+            description='Parent link of SLAM frame'
+        ),
+        DeclareLaunchArgument(
+            'child_frame_id',
+            default_value='Passive/left_camera_link',
+            description='link of SLAM frame'
+        ),
         DeclareLaunchArgument(
             'frame_id',
-            defalut_value='orbslam3',
+            default_value='map',
             description='PointCloud SLAM link'
         ),
+        DeclareLaunchArgument('left_image', default_value=['left/image_raw'], description='stereo left image'),
+        DeclareLaunchArgument('right_image', default_value=['right/image_raw'], description='stereo right image'),
+        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+                  description='Caminho para o vocabulário ORB'),
+        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
+                  description='Caminho para o settings .yaml'),
         Node(
             package='orbslam3_ros2',
             executable='stereo-inertial',
             name='stereo_inertial_orbslam3',
             namespace=LaunchConfiguration('namespace'),
             output='screen',
-            arguments=[
-                LaunchConfiguration('vocabulary'),
-                PathJoinSubstitution([
-                    FindPackageShare('orbslam3_ros2'),
-                    'config',  
-                    LaunchConfiguration('yaml_file')
-                ]),
-                'False',
-                'True',
-                LaunchConfiguration('pangolin')
-            ],
             parameters=[{
+                'voc_file': LaunchConfiguration('voc_file'),
+                'settings_file': LaunchConfiguration('settings_file'),
                 'rescale': LaunchConfiguration('rescale'),
-                'parent_frame_id': LaunchConfiguration('parent_link'),
-                'child_frame_id': LaunchConfiguration('child_link'),
+                'do_rectify': True,
+                'ENU_publish': True,
+                'parent_frame_id': LaunchConfiguration('parent_frame_id'),
+                'child_frame_id': LaunchConfiguration('child_frame_id'),
                 'frame_id': LaunchConfiguration('frame_id')
             }],
             remappings=[
-                ('camera/left', '/SM2/left/image_raw'),
-                ('camera/right', '/SM2/right/image_raw'),
-                ('/imu' , '/SM2/imu/data_raw')  
+                ('camera/left', 'left/image_raw'),
+                ('camera/right', 'right/image_raw'),
+                ('/imu' , 'imu/data_raw')  
             ]
         )
     ])

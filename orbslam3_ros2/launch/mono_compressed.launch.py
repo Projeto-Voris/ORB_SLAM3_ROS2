@@ -6,23 +6,9 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'vocabulary',
-            default_value=PathJoinSubstitution([
-                FindPackageShare('orbslam3_ros2'),
-                'vocabulary',  # Assuming your vocab file is in the vocabulary directory
-                'ORBvoc.txt'   # Replace with your actual vocabulary file name
-            ]),
-            description='Path to the ORB_SLAM3 vocabulary file'
-        ),
-        DeclareLaunchArgument(
-            'yaml_file',
-            default_value='bluerov_fpv.yaml',
-            description='Name of the ORB_SLAM3 YAML configuration file'
-        ),
-        DeclareLaunchArgument(
+                DeclareLaunchArgument(
             'namespace',
-            default_value='orbslam3',
+            default_value='Passive',
             description='Namespace of system'
         ),
         DeclareLaunchArgument(
@@ -31,18 +17,13 @@ def generate_launch_description():
             description='Rescale Image'
         ),
         DeclareLaunchArgument(
-            'pangolin',
-            default_value='False',
-            description='Use the viewer'
-        ),
-        DeclareLaunchArgument(
             'parent_frame_id',
             default_value='base_link',
             description='Parent link of SLAM frame'
         ),
         DeclareLaunchArgument(
             'child_frame_id',
-            default_value='Passive/left_camera_enu_link',
+            default_value='Passive/left_camera_link',
             description='link of SLAM frame'
         ),
         DeclareLaunchArgument(
@@ -50,37 +31,28 @@ def generate_launch_description():
             default_value='map',
             description='PointCloud SLAM link'
         ),
-        DeclareLaunchArgument(
-            'ENU_publish',
-            default_value='False',
-            description='Publish poses in ENU frame'
-        ),
-        DeclareLaunchArgument(
-            'tracked_points',
-            default_value='True',
-            description='Publish tracked image'
-        ),
+        DeclareLaunchArgument('left_image', default_value=['left/image_raw'], description='stereo left image'),
+        DeclareLaunchArgument('right_image', default_value=['right/image_raw'], description='stereo right image'),
+        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+                  description='Caminho para o vocabulário ORB'),
+        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
+                  description='Caminho para o settings .yaml'),
         Node(
             package='orbslam3_ros2',
             executable='mono-compressed',
             namespace=LaunchConfiguration('namespace'),
             name='mono_orbslam3',
             output='screen',
-            arguments=[
-                LaunchConfiguration('vocabulary'),
-                PathJoinSubstitution([
-                    FindPackageShare('orbslam3_ros2'),
-                    'config',  # Assuming your config files are in the config directory
-                    LaunchConfiguration('yaml_file')  # Use the file name directly
-                ]),
-                LaunchConfiguration('pangolin')
-            ],
-            parameters=[{'rescale': LaunchConfiguration('rescale'),
-                        'tracked_points': LaunchConfiguration('tracked_points'),
-                        'parent_frame_id': LaunchConfiguration('parent_frame_id'),
-                        'child_frame_id': LaunchConfiguration('child_frame_id'),
-                        'frame_id': LaunchConfiguration('frame_id'),
-                        'ENU_publish': LaunchConfiguration('ENU_publish')}],
+            parameters=[{
+                'voc_file': LaunchConfiguration('voc_file'),
+                'settings_file': LaunchConfiguration('settings_file'),
+                'rescale': LaunchConfiguration('rescale'),
+                'do_rectify': True,
+                'ENU_publish': True,
+                'parent_frame_id': LaunchConfiguration('parent_frame_id'),
+                'child_frame_id': LaunchConfiguration('child_frame_id'),
+                'frame_id': LaunchConfiguration('frame_id')
+            }],
             remappings=[
                 ('camera/compressed', '/bluerov2/image_raw/compressed'),  # Remap the camera topic to the video frames topic
                 #('pose', '/mavros/vision_pose/pose'),
