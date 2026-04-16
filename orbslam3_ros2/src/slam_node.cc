@@ -18,12 +18,10 @@ const tf2::Matrix3x3 SlamNode::tf_orb_to_ros_enu(
 SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, const rclcpp::NodeOptions & options)
 : Node("ORB_SLAM3", options), m_SLAM(pSLAM)
 {
-    // tf_publisher = this->create_publisher<geometry_msgs::msg::TransformStamped>("transform", 10);
+    this->declare_parameter<bool>("tf_publish", true);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
     pathpublisher = this->create_publisher<nav_msgs::msg::Path>("path", 10);
     posepublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
-    // statepublisher = this->create_publisher<std_msgs::msg::String>("state", 10);
-    // flagpublisher = this->create_publisher<std_msgs::msg::Bool>("flag", 10);
     trackedpublisher = this->create_publisher<sensor_msgs::msg::Image>("tracked_image", 10);
     status_publisher = this->create_publisher<orbslam3_msgs::msg::SlamStatus>("slam_status", 10);
     resetservice = this->create_service<std_srvs::srv::Trigger>("reset", std::bind(&SlamNode::handleReset, this, std::placeholders::_1, std::placeholders::_2));
@@ -327,13 +325,22 @@ void SlamNode::PublishTransform(){
             tf2::Transform T_map_base_zeroed = initial_map_base_offset_.inverse() * T_map_base;
 
             // 4. Broadcast: map → base
-            geometry_msgs::msg::TransformStamped sendmsg;
-            sendmsg.header.stamp = current_frame_time_;
-            sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();
-            sendmsg.child_frame_id = this->get_parameter("parent_frame_id").as_string();
-            tf2::toMsg(T_map_base_zeroed, sendmsg.transform);
+            if (this->get_parameter("tf_publish").as_bool()) {
+                geometry_msgs::msg::TransformStamped sendmsg;
+                sendmsg.header.stamp = current_frame_time_;
+                sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();
+                sendmsg.child_frame_id = this->get_parameter("parent_frame_id").as_string();
+                tf2::toMsg(T_map_base_zeroed, sendmsg.transform);
 
-            tf_broadcaster_->sendTransform(sendmsg);
+                tf_broadcaster_->sendTransform(sendmsg);
+            }
+            // geometry_msgs::msg::TransformStamped sendmsg;
+            // sendmsg.header.stamp = current_frame_time_;
+            // sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();
+            // sendmsg.child_frame_id = this->get_parameter("parent_frame_id").as_string();
+            // tf2::toMsg(T_map_base_zeroed, sendmsg.transform);
+
+            // tf_broadcaster_->sendTransform(sendmsg);
 
         } catch (const std::exception& ex) {
             // Mudamos para std::exception pois não estamos mais fazendo chamadas exclusivas de TF que lançam TransformException aqui
