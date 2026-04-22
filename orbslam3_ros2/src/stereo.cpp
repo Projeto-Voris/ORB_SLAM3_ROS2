@@ -22,6 +22,14 @@ namespace orbslam3_ros2
 StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
 : SlamNode(nullptr, options)
 {
+
+    auto slam_cb_group = this->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    // 2. Configure as opções de inscrição
+    rclcpp::SubscriptionOptions sub_options;
+    sub_options.callback_group = slam_cb_group;
+
     RCLCPP_INFO(this->get_logger(), "Inicializando StereoSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
@@ -39,12 +47,13 @@ StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
     }
 
     // ORB_SLAM3::System::STEREO = 1
+    RCLCPP_INFO(this->get_logger(), "Rectify images: %d");
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::STEREO, false);
     
     RCLCPP_INFO(this->get_logger(), "ORB_SLAM3 System Inicializado!");
 
-    left_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/left");
-    right_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/right");
+    left_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/left", rmw_qos_profile_sensor_data, sub_options);
+    right_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/right", rmw_qos_profile_sensor_data, sub_options);
     syncApproximate = std::make_shared<message_filters::Synchronizer<approximate_sync_policy>>(approximate_sync_policy(10), *left_sub, *right_sub);
     syncApproximate->registerCallback(&StereoSlamNode::GrabStereo, this);
 }
@@ -64,7 +73,7 @@ void StereoSlamNode::GrabStereo(const sensor_msgs::msg::Image::ConstSharedPtr ms
     }
 
     try {
-        imRight = cv_bridge::toCvShare(msgRight, msgLeft->encoding)->image;
+        imRight = cv_bridge::toCvShare(msgRight, msgRight->encoding)->image;
     } catch (cv_bridge::Exception& e) {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
         return;
@@ -74,10 +83,11 @@ void StereoSlamNode::GrabStereo(const sensor_msgs::msg::Image::ConstSharedPtr ms
         cv::resize(imLeft.clone(), imgLeft, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
         cv::resize(imRight.clone(), imgRight, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
     }
-    std::stringstream left, right;
-    left << "pid: " << GETPID() << ", ptr: " << msgLeft.get();
-    right << "pid: " << GETPID() << ", ptr: " << msgRight.get();
-    // RCLCPP_WARN(this->get_logger(), "l: %s, r: %s", left.str().c_str(), right.str().c_str());
+    else{
+        cv::resize(imLeft.clone(), imgLeft, cv::Size(), 1.0, 1.0, cv::INTER_LINEAR);
+        cv::resize(imRight.clone(), imgRight, cv::Size(), 1.0, 1.0, cv::INTER_LINEAR);
+    
+    }
 
     SE3 = m_SLAM->TrackStereo(imgLeft, imgRight, Utility::StampToSec(msgLeft->header.stamp));
     current_frame_time_ = now();

@@ -157,36 +157,42 @@ void SlamNode::PublishTrackedPointCloud(){
     pointcloudmsg.is_bigendian = false;
     pointcloudmsg.data.resize(pointcloudmsg.point_step*count);
 
-    tf2::Transform T_cam_base = T_base_cam_.inverse();
+   tf2::Vector3 cam_offset = T_base_cam_.getOrigin(); 
+    
     tf2::Matrix3x3 tf_orb_to_ros = this->get_parameter("ENU_publish").as_bool() ? tf_orb_to_ros_enu : tf_orb_to_ros_default;
+
+    // Se houver offset inicial, calculamos a translação dele fora do loop para economizar CPU
+    tf2::Vector3 initial_offset_translation(0, 0, 0);
+    if (initial_offset_set_) {
+        // Ordem correta: Matriz * Vetor
+        initial_offset_translation = tf_orb_to_ros * initial_map_base_offset_.inverse().getOrigin();
+    }
 
     for (size_t i = 0; i < count; i++)
     {
+        // 1. Extrai o ponto no referencial do ORB-SLAM (Z frente, X direita, Y baixo)
         float x = points[indexes[i]]->GetWorldPos()(0);
         float y = points[indexes[i]]->GetWorldPos()(1);
         float z = points[indexes[i]]->GetWorldPos()(2);
-
-        tf2::Vector3 pt_cam(x, y, z);
+        tf2::Vector3 pt_orb(x, y, z);
         
-        tf2::Vector3 pt_base = T_cam_base * pt_cam * tf_orb_to_ros; // Aplica a transformação de câmera para base e a rotação de coordenadas
+        // 2. Gira o ponto para o padrão ROS (X frente, Y esquerda, Z cima)
+        tf2::Vector3 pt_ros = tf_orb_to_ros * pt_orb;
 
-        if (initial_offset_set_) {
-            tf2::Vector3 pt_base_zeroed = initial_map_base_offset_.inverse() * pt_base; // Mudado de pt_cam para pt_base
-            float xb = pt_base_zeroed.x();
-            float yb = pt_base_zeroed.y();
-            float zb = pt_base_zeroed.z();
-            memcpy(&pointcloudmsg.data[i*12], &xb, 4);
-            memcpy(&pointcloudmsg.data[i*12 + 4], &yb, 4);
-            memcpy(&pointcloudmsg.data[i*12 + 8], &zb, 4);
-        } else {
-            float xb = pt_base.x();
-            float yb = pt_base.y();
-            float zb = pt_base.z();
-            memcpy(&pointcloudmsg.data[i*12], &xb, 4);
-            memcpy(&pointcloudmsg.data[i*12 + 4], &yb, 4);
-            memcpy(&pointcloudmsg.data[i*12 + 8], &zb, 4);
-        }
+        // 3. Adiciona o deslocamento da câmera para a base
+        // (Move o "0,0,0" do mapa da lente da câmera para o chão/centro do robô)
+        tf2::Vector3 pt_base = pt_ros + cam_offset;
+
+        // 5. Copia os bytes para a mensagem PointCloud2
+        float final_x = pt_base.x();
+        float final_y = pt_base.y();
+        float final_z = pt_base.z();
+        
+        memcpy(&pointcloudmsg.data[i*12], &final_x, 4);
+        memcpy(&pointcloudmsg.data[i*12 + 4], &final_y, 4);
+        memcpy(&pointcloudmsg.data[i*12 + 8], &final_z, 4);
     }
+    
     pclpublisher->publish(pointcloudmsg);
 }
 
@@ -334,13 +340,6 @@ void SlamNode::PublishTransform(){
 
                 tf_broadcaster_->sendTransform(sendmsg);
             }
-            // geometry_msgs::msg::TransformStamped sendmsg;
-            // sendmsg.header.stamp = current_frame_time_;
-            // sendmsg.header.frame_id = this->get_parameter("frame_id").as_string();
-            // sendmsg.child_frame_id = this->get_parameter("parent_frame_id").as_string();
-            // tf2::toMsg(T_map_base_zeroed, sendmsg.transform);
-
-            // tf_broadcaster_->sendTransform(sendmsg);
 
         } catch (const std::exception& ex) {
             // Mudamos para std::exception pois não estamos mais fazendo chamadas exclusivas de TF que lançam TransformException aqui
@@ -365,22 +364,9 @@ tf2::Transform SlamNode::TransformFromSophus(Sophus::SE3f &pose)
         rotation(2, 0), rotation(2, 1), rotation(2, 2));
         tf2::Vector3 tf_camera_translation(
             translation(0), translation(1), translation(2));
-    // RCLCPP_INFO(this->get_logger(), "ROT matrix orb to ros:\n[%.2f, %.2f, %.2f]\n[%.2f, %.2f, %.2f]\n[%.2f, %.2f, %.2f]", 
-    //             tf_orb_to_ros.getRow(0).x(), tf_orb_to_ros.getRow(0).y(), tf_orb_to_ros.getRow(0).z(),
-    //             tf_orb_to_ros.getRow(1).x(), tf_orb_to_ros.getRow(1).y(), tf_orb_to_ros.getRow(1).z(),
-    //             tf_orb_to_ros.getRow(2).x(), tf_orb_to_ros.getRow(2).y(), tf_orb_to_ros.getRow(2).z());
-
 
     tf_camera_rotation = tf_orb_to_ros * tf_camera_rotation;
     tf_camera_translation = tf_orb_to_ros * tf_camera_translation;
-
-    // // Inverse matrix
-    // tf_camera_rotation = tf_camera_rotation.transpose();
-    // tf_camera_translation = (tf_camera_rotation*tf_camera_translation);
-
-    // //Transform from orb coordinate system to ros coordinate system on map coordinates
-    // tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
-    // tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
 
     // Return the final tf2::Transform
     return tf2::Transform(tf_camera_rotation, tf_camera_translation);
@@ -400,8 +386,8 @@ void SlamNode::SaveData() {
     CreateDirectoryIfNotExists(output_dir);
     
     // Salva todos os dados implementados
-    m_SLAM->SaveMapPoints(output_dir + "/map_points.ply");
-    m_SLAM->SaveKeyFrameTrajectory(output_dir + "/keyframe_trajectory.txt");
-    m_SLAM->SaveTrajectoryKITTI(output_dir + "/trajectory_kitti.txt");
+    m_SLAM->SaveMapPoints(output_dir + "map_points.ply");
+    m_SLAM->SaveKeyFrameTrajectory(output_dir + "keyframe_trajectory.txt");
+    m_SLAM->SaveTrajectoryKITTI(output_dir + "trajectory_kitti.txt");
 }
 }
