@@ -11,7 +11,7 @@
 #include "sensor_msgs/msg/image.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform.hpp"
 
 #include <tf2_ros/transform_broadcaster.h>
@@ -88,7 +88,7 @@ protected:
     tf2::Transform T_base_cam_;
 
 private:
-    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr posepublisher;
+    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr posepublisher;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pclpublisher;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pathpublisher;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr trackedpublisher;

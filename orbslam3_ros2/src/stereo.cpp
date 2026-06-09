@@ -33,11 +33,10 @@ StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
     RCLCPP_INFO(this->get_logger(), "Inicializando StereoSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
+    this->declare_parameter("resize_factor", 0.25);
     this->declare_parameter<bool>("do_rectify", true);
-    this->declare_parameter<bool>("rescale", false);
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("rescale", rescale);
     this->get_parameter("do_rectify", doRectify);
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
@@ -65,29 +64,25 @@ StereoSlamNode::~StereoSlamNode()
 
 void StereoSlamNode::GrabStereo(const sensor_msgs::msg::Image::ConstSharedPtr msgLeft, const sensor_msgs::msg::Image::ConstSharedPtr msgRight) {
     cv::Mat imgLeft, imgRight;
+    double resize = this->get_parameter("resize_factor").as_double();
     try {
-        imLeft = cv_bridge::toCvShare(msgLeft, msgLeft->encoding)->image;
+        imLeft = cv_bridge::toCvShare(msgLeft, sensor_msgs::image_encodings::BGR8)->image;
     } catch (cv_bridge::Exception& e) {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
         return;
     }
 
     try {
-        imRight = cv_bridge::toCvShare(msgRight, msgRight->encoding)->image;
+        imRight = cv_bridge::toCvShare(msgRight, sensor_msgs::image_encodings::BGR8)->image;
     } catch (cv_bridge::Exception& e) {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
         return;
     }
-    
-    if (rescale){
-        cv::resize(imLeft.clone(), imgLeft, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
-        cv::resize(imRight.clone(), imgRight, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
-    }
-    else{
-        cv::resize(imLeft.clone(), imgLeft, cv::Size(), 1.0, 1.0, cv::INTER_LINEAR);
-        cv::resize(imRight.clone(), imgRight, cv::Size(), 1.0, 1.0, cv::INTER_LINEAR);
-    
-    }
+
+    cv::resize(imLeft.clone(), imgLeft, cv::Size(), resize, resize, cv::INTER_LINEAR);
+    cv::resize(imRight.clone(), imgRight, cv::Size(), resize, resize, cv::INTER_LINEAR);
+
+
 
     SE3 = m_SLAM->TrackStereo(imgLeft, imgRight, Utility::StampToSec(msgLeft->header.stamp));
     current_frame_time_ = now();

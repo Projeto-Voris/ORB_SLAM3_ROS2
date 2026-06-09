@@ -18,24 +18,24 @@ const tf2::Matrix3x3 SlamNode::tf_orb_to_ros_enu(
 SlamNode::SlamNode(ORB_SLAM3::System* pSLAM, const rclcpp::NodeOptions & options)
 : Node("ORB_SLAM3", options), m_SLAM(pSLAM)
 {
-    this->declare_parameter<bool>("tf_publish", true);
     pclpublisher = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 10);
     pathpublisher = this->create_publisher<nav_msgs::msg::Path>("path", 10);
-    posepublisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
+    posepublisher = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("pose_cov", 10);
     trackedpublisher = this->create_publisher<sensor_msgs::msg::Image>("tracked_image", 10);
     status_publisher = this->create_publisher<orbslam3_msgs::msg::SlamStatus>("slam_status", 10);
     resetservice = this->create_service<std_srvs::srv::Trigger>("reset", std::bind(&SlamNode::handleReset, this, std::placeholders::_1, std::placeholders::_2));
-
+    
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
-
+    
     this->declare_parameter("frame_id", "orbslam3");
     this->declare_parameter("parent_frame_id", "SM2/base_link");
     this->declare_parameter("child_frame_id", "SM2/left_camera_link");
     this->declare_parameter("tracked_points", false);
     this->declare_parameter("ENU_publish", false);
-
+    this->declare_parameter<bool>("tf_publish", true);
+    
 }
 SlamNode::~SlamNode() {
     // Para todas as threads
@@ -298,10 +298,42 @@ void SlamNode::PublishPose() {
     tf2::Transform T_map_base = T_map_cam * T_cam_base;
     tf2::Transform T_map_base_zeroed = initial_map_base_offset_.inverse() * T_map_base;
 
-    auto pose_msg = geometry_msgs::msg::PoseStamped();
+    auto pose_msg = geometry_msgs::msg::PoseWithCovarianceStamped();
     pose_msg.header.stamp = current_frame_time_;
     pose_msg.header.frame_id = this->get_parameter("frame_id").as_string();
-    tf2::toMsg(T_map_base_zeroed, pose_msg.pose);
+    tf2::toMsg(T_map_base_zeroed, pose_msg.pose.pose);
+
+    int state = m_SLAM->GetTrackingState();
+    std::fill(pose_msg.pose.covariance.begin(), pose_msg.pose.covariance.end(), 0.0);
+
+    if(state == 2 || state == 5){
+        // Tracking, covariance ok (slam is not the best pose estimator)
+        pose_msg.pose.covariance[0] = 0.05;
+        pose_msg.pose.covariance[7] = 0.05;
+        pose_msg.pose.covariance[14] = 0.05;
+        pose_msg.pose.covariance[21] = 0.1;
+        pose_msg.pose.covariance[28] = 0.1;
+        pose_msg.pose.covariance[35] = 0.1;
+    }
+    if(state == 3){
+        // Recently lost, may find itself again soon
+        pose_msg.pose.covariance[0] = 1.0;
+        pose_msg.pose.covariance[7] = 1.0;
+        pose_msg.pose.covariance[14] = 1.0;
+        pose_msg.pose.covariance[21] = 1.0;
+        pose_msg.pose.covariance[28] = 1.0;
+        pose_msg.pose.covariance[35] = 1.0;
+    }
+    if(state == -1 || state == 0 || state == 1 || state == 4){
+        // If slam is lost
+        pose_msg.pose.covariance[0] = -1;
+        pose_msg.pose.covariance[7] = -1;
+        pose_msg.pose.covariance[14] = -1;
+        pose_msg.pose.covariance[21] = -1;
+        pose_msg.pose.covariance[28] = -1;
+        pose_msg.pose.covariance[35] = -1;
+        pose_msg.pose.covariance[35] = -1;
+    }
 
     posepublisher->publish(pose_msg);
 }   
