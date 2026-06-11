@@ -7,7 +7,7 @@ namespace slam
         // Declare and get the path parameter from the launch file
         this->declare_parameter("saving_path", "~/Pictures/images");
         this->declare_parameter<bool>("apply_clahe", true);
-        this->declare_parameter("clahe_tiles", 5);
+        this->declare_parameter("clahe_tiles", 5.0);
         this->declare_parameter("clahe_climp", 2.0);
 
         this->get_parameter("saving_path", path_);
@@ -20,7 +20,7 @@ namespace slam
         }
 
         if(apply_clahe_){
-            double tile = this->get_parameter("clahe_tile").as_double();
+            double tile = this->get_parameter("clahe_tiles").as_double();
             double climp = this->get_parameter("clahe_climp").as_double();
             clahe_->setClipLimit(climp);
             clahe_->setTilesGridSize(cv::Size(int(tile), int(tile)));
@@ -32,8 +32,8 @@ namespace slam
         sub_options.callback_group = cb_group;
             
         // Initialize the subscribers using the node's interface directly
-        left_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera_1/image_raw", rmw_qos_profile_sensor_data, sub_options);
-        right_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera_2/image_raw", rmw_qos_profile_sensor_data, sub_options);
+        left_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/left", rmw_qos_profile_sensor_data, sub_options);
+        right_sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "camera/right", rmw_qos_profile_sensor_data, sub_options);
         sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>( SyncPolicy(10), *left_sub, *right_sub);
         sync_->registerCallback(&ImageSaver::images_cb, this);
         
@@ -76,7 +76,7 @@ namespace slam
     void ImageSaver::odom_cb(const nav_msgs::msg::Odometry::ConstSharedPtr &msg) {
         this->get_parameter("apply_clahe", apply_clahe_);
         if(apply_clahe_){
-            double tile = this->get_parameter("clahe_tile").as_double();
+            double tile = this->get_parameter("clahe_tiles").as_double();
             double climp = this->get_parameter("clahe_climp").as_double();
             clahe_->setClipLimit(climp);
             clahe_->setTilesGridSize(cv::Size(tile, tile));
@@ -172,6 +172,7 @@ namespace slam
         std::string path_L = path_ + "/left/L" + img_counter_ + std::to_string(counter_) + ".png";
         std::string path_R = path_ + "/right/R" + img_counter_ + std::to_string(counter_) + ".png";
         if(apply_clahe_){
+            // RCLCPP_INFO(this->get_logger(), "Applying Clahe");
             cv::Mat clahe_left, clahe_right;
             clahe_left = appyCLAHEtoColor(img_left);
             clahe_right = appyCLAHEtoColor(img_right);
