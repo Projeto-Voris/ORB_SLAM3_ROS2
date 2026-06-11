@@ -40,7 +40,7 @@ StereoInertialNode::StereoInertialNode(const rclcpp::NodeOptions & options) :
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::IMU_STEREO, false);
     
 
-    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu", 100, std::bind(&StereoInertialNode::GrabImu, this, _1));
+    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", 100, std::bind(&StereoInertialNode::GrabImu, this, _1));
     subImgLeft_ = this->create_subscription<sensor_msgs::msg::Image>("camera/left", 10, std::bind(&StereoInertialNode::GrabImageLeft, this, _1));
     subImgRight_ = this->create_subscription<sensor_msgs::msg::Image>("camera/right", 10, std::bind(&StereoInertialNode::GrabImageRight, this, _1));
     

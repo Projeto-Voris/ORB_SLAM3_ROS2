@@ -47,12 +47,6 @@ link_directories(
 add_executable(mono  src/mono.cpp  src/slam_node.cc)
 ament_target_dependencies(mono rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
 
-add_executable(stereo  src/stereo_node.cpp  src/stereo.cpp  src/stereo_image_saver.cpp  src/slam_node.cc)
-ament_target_dependencies(stereo rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
-
-add_executable(stereo-inertial  src/stereo_inertial_node.cpp  src/stereo_inertial.cpp  src/stereo_image_saver.cpp  src/slam_node.cc)
-ament_target_dependencies(stereo-inertial rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
-
 add_executable(mono-inertial  src/mono-inertial.cpp  src/slam_node.cc)
 ament_target_dependencies(mono-inertial rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
 
@@ -133,6 +127,8 @@ ament_target_dependencies(stereo_saver_component
   cv_bridge 
   sensor_msgs 
   message_filters
+  nav_msgs
+  std_srvs
   ORB_SLAM3 Pangolin OpenCV
 )
 
@@ -141,7 +137,7 @@ target_link_libraries(stereo_saver_component
 )
 
 rclcpp_components_register_node(stereo_saver_component 
-  PLUGIN "orbslam3_ros2::StereoImageSaverNode" 
+  PLUGIN "slam::ImageSaver" 
   EXECUTABLE stereo_saver_node
 )
 
@@ -159,7 +155,7 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS mono mono-inertial stereo stereo-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
+install(TARGETS mono mono-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
 # Install launch files.
 install(DIRECTORY launch config vocabulary
  DESTINATION share/${PROJECT_NAME}/)

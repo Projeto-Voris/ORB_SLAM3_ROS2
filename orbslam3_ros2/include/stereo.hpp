@@ -58,6 +58,9 @@ private:
     cv::Mat imLeft;
     cv::Mat imRight;
 
+    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE();
+    bool apply_clahe {false};
+
 
 };
 }
