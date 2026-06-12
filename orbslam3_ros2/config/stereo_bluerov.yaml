@@ -5,7 +5,7 @@
 #--------------------------------------------------------------------------------------------
 File.version: "1.0"
 
-Camera.type: "PinHole"
+Camera.type: "Rectified"
 
 # --- Câmera 1 ---
 Camera1.fx: 314.56726
@@ -38,7 +38,7 @@ Camera.fps: 30
 Camera.RGB: 0
 
 Stereo.ThDepth: 60.0
-
+Stereo.b: 0.214986119164 # baseline times fx (metric units)
 # Transformation matrix from right camera to left camera
 Stereo.T_c1_c2: !!opencv-matrix
   rows: 4

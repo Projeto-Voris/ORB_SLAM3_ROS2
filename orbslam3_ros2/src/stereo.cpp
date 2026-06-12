@@ -49,11 +49,11 @@ StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
 
     if (apply_clahe){
         clahe_->setClipLimit(5.0);
-        clahe_->setTilesGridSize(cv::Size(9,9));
+        clahe_->setTilesGridSize(cv::Size(5, 5));
     }
 
     // ORB_SLAM3::System::STEREO = 1
-    RCLCPP_INFO(this->get_logger(), "Rectify images: %d");
+    RCLCPP_INFO(this->get_logger(), "Rectify images: %d", doRectify);
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::STEREO, false);
     
     RCLCPP_INFO(this->get_logger(), "ORB_SLAM3 System Inicializado!");
