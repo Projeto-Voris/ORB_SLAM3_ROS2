@@ -1,78 +1,84 @@
 # ORB_SLAM3_ROS2
-This repository is ROS2 wrapping to use ORB_SLAM3
+
+A modernised, modular ROS 2 wrapper for **ORB-SLAM3**, optimised for high-performance intra-process communication (IPC) and robust feature tracking in challenging environments. This repository consolidates legacy monolithic tracking executables into a single unified architecture tailored for the **VORIS Project** at **LabMetro - UFSC**.
 
 ---
 
-## Demo Video
-[![orbslam3_ros2](https://user-images.githubusercontent.com/31432135/220839530-786b8a28-d5af-4aa5-b4ed-6234c2f4ca33.PNG)](https://www.youtube.com/watch?v=zXeXL8q72lM)
+## Technical Highlights & Architecture
 
-## Prerequisites
-- I have tested on below version.
-  - Ubuntu 22.04
-  - ROS2 Humble
-  - OpenCV 4.5.4
+* **Unified SLAM Engine (`slam_node.cc`)**: A single, consolidated state machine manages all underlying tracking pipelines, eliminating code duplication across separate binaries.
+* **Component-Based / Composable Nodes**: High-bandwidth pipelines like **Stereo** and **Stereo-Inertial** are engineered as ROS 2 Composable Nodes. By running them within a component container, they leverage true **Intra-Process Communication (IPC)**, allowing zero-copy pointer passing that completely bypasses network serialisation overhead.
+* **Low-Bandwidth Resiliency**: **Monocular** and **Mono-Inertial** pipelines support native `image_transport` **compressed image streams**, enabling reliable tracking over tethered, high-latency, or narrow-bandwidth connections (e.g., ROV umbilical cables).
+* **Adaptive Contrast Enhancement (CLAHE)**: Integrated Contrast Limited Adaptive Histogram Equalisation preprocessing addresses uneven illumination, backscatter, or low-visibility scenarios by sharpening structural features before they reach the ORB extractor.
+* **Advanced TF & Reference Frame Control**:
+* `ENU_publish`: Dynamically maps tracking output. Set to `True` to publish state estimates in standard ROS coordinate frames (East-North-Up), or `False` to output raw, right-handed camera coordinates.
+* **Coordinate Tree Integration**: The node parses `parent_frame_id` (e.g., `base_link`) and `child_frame_id` (camera optical frame) parameters, automatically computing the camera-to-body spatial transformation and publishing tracking frames directly to the fixed `map` frame (`frame_id`).
 
-- Build ORB_SLAM3
-  - Go to this [repo](https://github.com/zang09/ORB-SLAM3-STEREO-FIXED) and follow build instruction.
 
-- Install related ROS2 package
-```bash
-sudo apt install ros-$ROS_DISTRO-vision-opencv && sudo apt install ros-$ROS_DISTRO-message-filters
-```
 
-## How to build
-1. Clone repository to your ROS workspace
-```bash
-mkdir -p colcon_ws/src
-cd ~/colcon_ws/src
-git clone https://github.com/Projeto-Voris/ORB_SLAM3_ROS2.git orbslam3_ros2
-```
+---
 
-2. Change this [line](https://github.com/zang09/ORB_SLAM3_ROS2/blob/ee82428ed627922058b93fea1d647725c813584e/CMakeLists.txt#L5) to your own `python site-packages` path
+## Supported Pipeline Matrix
 
-3. Change this [line](https://github.com/zang09/ORB_SLAM3_ROS2/blob/ee82428ed627922058b93fea1d647725c813584e/CMakeModules/FindORB_SLAM3.cmake#L8) to your own `ORB_SLAM3` path
+| Tracking Mode | Node Type | Compressed Image Transport | CLAHE Preprocessing |
+| --- | --- | --- | --- |
+| **Monocular** | Standard / Component | ✅ Yes | ✅ Yes |
+| **Mono-Inertial** | Standard / Component | ✅ Yes | ✅ Yes |
+| **Stereo** | Composable (IPC Optimized) | ❌ No | ✅ Yes |
+| **Stereo-Inertial** | Composable (IPC Optimized) | ❌ No | ✅ Yes |
 
-Now, you are ready to build!
+---
+
+## Prerequisites & Installation
+
+### 1. Build the Core SLAM Engine
+
+This wrapper requires the accompanying, custom-patched version of the core tracking system. Ensure you have successfully compiled the [VORIS ORB-SLAM3 Core Engine](https://github.com/Projeto-Voris/ORB-SLAM3) first.
+
+### 2. Resolve ROS Dependencies
+
+Use `rosdep` to download and link system dependencies (`vision-opencv`, `image-transport`, `message-filters`):
+
 ```bash
 cd ~/colcon_ws
-colcon build --symlink-install --packages-select orbslam3_ros2
+rosdep install --from-paths src --ignore-src -y
+
 ```
 
-## Troubleshootings
-1. If you cannot find `sophus/se3.hpp`:  
-Go to your `ORB_SLAM3_ROOT_DIR` and install sophus library.
-```bash
-cd ~/{ORB_SLAM3_ROOT_DIR}/Thirdparty/Sophus/build
-sudo make install
-```
-2. Please compile with `OpenCV 4.5.4` version.
+### 3. Clone and Compile
 
-## How to use
-1. Source the workspace  
+Ensure you explicitly target the tracking development branch during cloning:
+
 ```bash
-source ~/colcon_ws/install/local_setup.bash
+cd ~/colcon_ws/src
+git clone https://github.com/Projeto-Voris/ORB_SLAM3_ROS2.git orbslam3_ros2
+
+cd ~/colcon_ws
+colcon build --symlink-install --packages-up-to orbslam3_ros2
+
 ```
 
-2. Run orbslam mode, which you want.  
-This repository only support `MONO, STEREO, RGBD, STEREO-INERTIAL` mode now.  
-You can find vocabulary file and config file in here. (e.g. `orbslam3_ros2/vocabulary/ORBvoc.txt`, `orbslam3_ros2/config/monocular/TUM1.yaml` for monocular SLAM).
-  - `MONO` mode  
-```bash
-ros2 run orbslam3 mono PATH_TO_VOCABULARY PATH_TO_YAML_CONFIG_FILE
-```
-  - `STEREO` mode  
-```bash
-ros2 run orbslam3 stereo PATH_TO_VOCABULARY PATH_TO_YAML_CONFIG_FILE BOOL_RECTIFY
-```
-  - `RGBD` mode  
-```bash
-ros2 run orbslam3 rgbd PATH_TO_VOCABULARY PATH_TO_YAML_CONFIG_FILE
-```
-  - `STEREO-INERTIAL` mode  
-```bash
-ros2 run orbslam3 stereo-inertial PATH_TO_VOCABULARY PATH_TO_YAML_CONFIG_FILE BOOL_RECTIFY [BOOL_EQUALIZE]
-```
+---
 
+## Configuration & Launch Parameters
 
-## Acknowledgments
-This repository is modified from [this](https://github.com/zang09/ORB_SLAM3_ROS2) repository.  
+Node configurations are managed directly through native ROS 2 parameter blocks rather than legacy command-line arguments.
+
+### Parameter Definitions
+
+| Parameter Name | Type | Description |
+| --- | --- | --- |
+| `voc_file` | `string` | Absolute path to the `ORBvoc.txt` vocabulary file. |
+| `settings_file` | `string` | Absolute path to the sensor calibration `.yaml` configuration. |
+| `resize_factor` | `double` | Rescale factor to input image of `ORB-SLAM3` pipeline. |
+| `tf_publish` | `bool` | `True` for broadcasting tf in `/tf` topic. |
+| `ENU_publish` | `bool` | `True` for standard ROS frames; `False` for raw camera-frame coordinates. |
+| `parent_frame_id` | `string` | System base reference frame link (typically `base_link`). |
+| `child_frame_id` | `string` | Origin optical coordinate frame link of the tracking camera sensor. |
+| `frame_id` | `string` | Global fixed world coordinates tracking anchor (typically `map`). |
+
+---
+
+## Project Context
+
+This software operates as a core state estimation module for the **VORIS Project** (*Veículo Operado Remotamente para Inspeção Submarina*) managed under **LabMetro - UFSC**. The pipeline is custom-tailored to provide deterministic localization data and robust feature tracking required for automated close-quarters visual inspection of maritime installations and structures.
