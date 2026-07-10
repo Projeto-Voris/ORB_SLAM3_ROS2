@@ -7,6 +7,7 @@ from launch_ros.actions import ComposableNodeContainer, Node, LoadComposableNode
 from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
+import os
 
 def launch_setup(context, *args, **kwargs):
     composable_nodes = [
@@ -18,7 +19,6 @@ def launch_setup(context, *args, **kwargs):
                     parameters=[{
                         'voc_file': LaunchConfiguration('voc_file'),
                         'settings_file': LaunchConfiguration('settings_file'),
-                        'do_rectify': True,
                         'ENU_publish': True,
                         'tf_publish': False,
                         'resize_factor': 0.25,
@@ -36,25 +36,6 @@ def launch_setup(context, *args, **kwargs):
                     extra_arguments=[{'use_intra_process_comms': True}]
                 )
     ]
-    if LaunchConfiguration('save_stereo').perform(context) == 'true':
-        composable_nodes.append(ComposableNode(
-                    package='orbslam3_ros2',
-                    plugin='slam::ImageSaver',
-                    name='stereo_image_saver',
-                    namespace=LaunchConfiguration('namespace'),
-                    parameters=[{
-                        'saving_path': '/home/jetson/stereo_images',
-                        'apply_clahe': True,
-                        'clahe_tiles': 5.0,
-                        'clahe_clip': 5.0,
-                    }],
-                    remappings=[
-                        ('camera/left', "/Passive/left/image_raw"),
-                        ('camera/right', "/Passive/right/image_raw"),
-                        ('odometry', '/mavros/local_position/odom')
-                    ],
-                    extra_arguments=[{'use_intra_process_comms': True}]
-                ))
     composable = ComposableNodeContainer(
         name='passive_stereo_container',
         namespace=LaunchConfiguration('namespace'),
@@ -68,10 +49,9 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('namespace',default_value='debug',description='Namespace of system' ),
-        DeclareLaunchArgument('save_stereo', default_value='true', description='Habilitar salvamento de imagens stereo'),
-        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+        DeclareLaunchArgument('voc_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
                   description='Caminho para o vocabulário ORB'),
-        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/stereo_bluerov.yaml', 
+        DeclareLaunchArgument('settings_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/stereo_bluerov.yaml', 
                   description='Caminho para o settings .yaml'),
 
         OpaqueFunction(function=launch_setup),

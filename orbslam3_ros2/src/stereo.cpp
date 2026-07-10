@@ -35,10 +35,9 @@ StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
     this->declare_parameter<std::string>("settings_file", "");
     this->declare_parameter("resize_factor", 0.25);
     this->declare_parameter<bool>("clahe", true);
-    this->declare_parameter<bool>("do_rectify", true);
+    
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("do_rectify", doRectify);
     this->get_parameter("clahe", apply_clahe);
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
@@ -48,12 +47,11 @@ StereoSlamNode::StereoSlamNode(const rclcpp::NodeOptions & options)
     }
 
     if (apply_clahe){
-        clahe_->setClipLimit(5.0);
+        clahe_->setClipLimit(2.0);
         clahe_->setTilesGridSize(cv::Size(5, 5));
     }
 
     // ORB_SLAM3::System::STEREO = 1
-    RCLCPP_INFO(this->get_logger(), "Rectify images: %d", doRectify);
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::STEREO, false);
     
     RCLCPP_INFO(this->get_logger(), "ORB_SLAM3 System Inicializado!");

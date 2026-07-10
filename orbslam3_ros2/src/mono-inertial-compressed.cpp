@@ -9,22 +9,6 @@
 
 #include "System.h"
 
-using std::placeholders::_1;
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-
-    rclcpp::NodeOptions options;
-    options.use_intra_process_comms(false);
-
-    auto slam_node = std::make_shared<orbslam3_ros2::MonoInertialCompressedNode>(options);
-
-    rclcpp::spin(slam_node);
-    rclcpp::shutdown();
-
-    return 0;
-}
 namespace orbslam3_ros2
 {
 MonoInertialCompressedNode::MonoInertialCompressedNode(const rclcpp::NodeOptions & options) :
@@ -33,16 +17,21 @@ MonoInertialCompressedNode::MonoInertialCompressedNode(const rclcpp::NodeOptions
     RCLCPP_INFO(this->get_logger(), "Inicializando CompressedSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
-    this->declare_parameter<bool>("do_rectify", true);
-    this->declare_parameter<bool>("rescale", false);
+    this->declare_parameter<bool>("clahe", false);
+
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("rescale", rescale);
+    this->get_parameter("clahe", apply_clahe);
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
         RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
         rclcpp::shutdown();
         return;
+    }
+
+    if (apply_clahe){
+        clahe_->setClipLimit(2.0);
+        clahe_->setTilesGridSize(cv::Size(5, 5));
     }
 
     // ORB_SLAM3::System::STEREO = 1
@@ -52,8 +41,8 @@ MonoInertialCompressedNode::MonoInertialCompressedNode(const rclcpp::NodeOptions
     imu_qos_profile.keep_last(100);
     img_qos_profile.keep_last(10);
 
-    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", imu_qos_profile, std::bind(&MonoInertialCompressedNode::GrabImu, this, _1));
-    subImg_ = this->create_subscription<sensor_msgs::msg::CompressedImage>("camera/compressed", img_qos_profile, std::bind(&MonoInertialCompressedNode::GrabImage, this, _1));
+    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", imu_qos_profile, std::bind(&MonoInertialCompressedNode::GrabImu, this, std::placeholders::_1));
+    subImg_ = this->create_subscription<sensor_msgs::msg::CompressedImage>("camera/compressed", img_qos_profile, std::bind(&MonoInertialCompressedNode::GrabImage, this, std::placeholders::_1));
 
     syncThread_ = new std::thread(&MonoInertialCompressedNode::SyncWithImu, this);
 
@@ -93,11 +82,17 @@ void MonoInertialCompressedNode::GrabImage(const sensor_msgs::msg::CompressedIma
 
 cv::Mat MonoInertialCompressedNode::GetImage(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
 {
+    double resize = this->get_parameter("resize_factor").as_double();
     cv::Mat img;
 
     try
     {
-        img = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        img = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8)->image;
+        cv::resize(img, img, cv::Size(), resize, resize, cv::INTER_LINEAR);
+
+        if(apply_clahe){
+            clahe_->apply(img, img);
+        }
     }
     catch (cv_bridge::Exception &e)
     {
@@ -154,3 +149,4 @@ void MonoInertialCompressedNode::SyncWithImu()
     }
 }
 }
+RCLCPP_COMPONENTS_REGISTER_NODE(orbslam3_ros2::MonoInertialCompressedNode);

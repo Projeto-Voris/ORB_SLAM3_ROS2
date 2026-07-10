@@ -44,109 +44,51 @@ link_directories(
   include
 )
 
-add_executable(mono  src/mono.cpp  src/slam_node.cc)
-ament_target_dependencies(mono rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+# add_executable(mono  src/mono.cpp  src/slam_node.cc)
+add_library(mono_component SHARED src/mono.cpp src/slam_node.cc)
+ament_target_dependencies(mono_component rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+target_link_libraries(mono_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(mono_component PLUGIN "orbslam3_ros2::MonocularSlamNode" EXECUTABLE mono-node)
 
-add_executable(mono-inertial  src/mono-inertial.cpp  src/slam_node.cc)
-ament_target_dependencies(mono-inertial rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+# add_executable(mono-inertial  src/mono-inertial.cpp  src/slam_node.cc)
+add_library(mono_inertial_component SHARED src/mono-inertial.cpp src/slam_node.cc)
+ament_target_dependencies(mono_inertial_component rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+target_link_libraries(mono_inertial_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(mono_inertial_component PLUGIN "orbslam3_ros2::MonoInertialNode" EXECUTABLE mono-inertial-node)
 
-add_executable(mono-compressed  src/mono-compressed.cpp  src/slam_node.cc)
-ament_target_dependencies(mono-compressed rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+# add_executable(mono-compressed  src/mono-compressed.cpp  src/slam_node.cc)
+add_library(mono_compressed_component SHARED src/mono-compressed.cpp src/slam_node.cc)
+ament_target_dependencies(mono_compressed_component rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+target_link_libraries(mono_compressed_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(mono_compressed_component PLUGIN "orbslam3_ros2::MonocularCompressedSlamNode" EXECUTABLE mono-compressed-node)
 
-add_executable(mono-inertial-compressed  src/mono-inertial-compressed.cpp  src/slam_node.cc)
-ament_target_dependencies(mono-inertial-compressed rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+# add_executable(mono-inertial-compressed  src/mono-inertial-compressed.cpp  src/slam_node.cc)
+add_library(mono_inertial_compressed_component SHARED src/mono-inertial-compressed.cpp src/slam_node.cc)
+ament_target_dependencies(mono_inertial_compressed_component rclcpp rclcpp_components sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs)
+target_link_libraries(mono_inertial_compressed_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(mono_inertial_compressed_component PLUGIN "orbslam3_ros2::MonoInertialCompressedNode" EXECUTABLE mono-inertial-compressed-node)
 
 add_library(stereo_slam_component SHARED src/stereo.cpp src/slam_node.cc)
+ament_target_dependencies(stereo_slam_component rclcpp rclcpp_components sensor_msgs cv_bridge message_filters tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs ORB_SLAM3 Pangolin OpenCV)
+target_link_libraries(stereo_slam_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(stereo_slam_component PLUGIN "orbslam3_ros2::StereoSlamNode" EXECUTABLE stereo-node)
 
-# Dependências ROS 2
-ament_target_dependencies(stereo_slam_component 
-  rclcpp 
-  rclcpp_components 
-  sensor_msgs 
-  cv_bridge 
-  message_filters 
-  tf2_geometry_msgs 
-  tf2_ros 
-  nav_msgs 
-  std_srvs
-  orbslam3_msgs
-  ORB_SLAM3 Pangolin OpenCV
-)
-
-# Linkagem de bibliotecas externas (CRÍTICO: Sem isso dá erro de "undefined symbol" ao rodar)
-target_link_libraries(stereo_slam_component 
-  ${ORB_SLAM3_LIBRARIES} 
-  ${Pangolin_LIBRARIES} 
-  ${OpenCV_LIBS}
-  ${Sophus_LIBRARIES}
-)
-
-# Registro do Plugin
-rclcpp_components_register_node(stereo_slam_component 
-  PLUGIN "orbslam3_ros2::StereoSlamNode" 
-  EXECUTABLE stereo_slam_node
-)
-# Stereo Inertial SLAM Component
 add_library(stereo_inertial_slam_component SHARED src/stereo_inertial.cpp src/slam_node.cc)
+ament_target_dependencies(stereo_inertial_slam_component rclcpp rclcpp_components sensor_msgs cv_bridge message_filters tf2_geometry_msgs tf2_ros nav_msgs std_srvs orbslam3_msgs ORB_SLAM3 Pangolin OpenCV)
+target_link_libraries(stereo_inertial_slam_component ${ORB_SLAM3_LIBRARIES} ${Pangolin_LIBRARIES} ${OpenCV_LIBS} ${Sophus_LIBRARIES})
+rclcpp_components_register_node(stereo_inertial_slam_component  PLUGIN "orbslam3_ros2::StereoInertialSlamNode"   EXECUTABLE stereo-inertial-node)
 
-ament_target_dependencies(stereo_inertial_slam_component 
-  rclcpp 
-  rclcpp_components 
-  sensor_msgs 
-  cv_bridge 
-  message_filters
-  tf2_geometry_msgs 
-  tf2_ros 
-  nav_msgs 
-  std_srvs
-  orbslam3_msgs
-  ORB_SLAM3 Pangolin OpenCV
-)
-
-# Linkagem de bibliotecas externas (CRÍTICO: Sem isso dá erro de "undefined symbol" ao rodar)
-target_link_libraries(stereo_inertial_slam_component 
-  ${ORB_SLAM3_LIBRARIES} 
-  ${Pangolin_LIBRARIES} 
-  ${OpenCV_LIBS}
-  ${Sophus_LIBRARIES}
-)
-
-# Registro do Plugin
-rclcpp_components_register_node(stereo_inertial_slam_component 
-  PLUGIN "orbslam3_ros2::StereoInertialSlamNode" 
-  EXECUTABLE stereo_inertial_slam_node
-)
-
-
-# 2. Componente do Saver (Gravação de Imagens)
 add_library(stereo_saver_component SHARED src/stereo_image_saver.cpp)
-
-ament_target_dependencies(stereo_saver_component 
-  rclcpp 
-  rclcpp_components 
-  cv_bridge 
-  sensor_msgs 
-  message_filters
-  nav_msgs
-  std_srvs
-  ORB_SLAM3 Pangolin OpenCV
-)
-
-target_link_libraries(stereo_saver_component 
-  ${OpenCV_LIBS}
-)
-
-rclcpp_components_register_node(stereo_saver_component 
-  PLUGIN "slam::ImageSaver" 
-  EXECUTABLE stereo_saver_node
-)
-
-# ==============================================================================
-# INSTALAÇÃO
-# ==============================================================================
+ament_target_dependencies(stereo_saver_component rclcpp rclcpp_components cv_bridge sensor_msgs message_filters nav_msgs std_srvs ORB_SLAM3 Pangolin OpenCV)
+target_link_libraries(stereo_saver_component ${OpenCV_LIBS})
+rclcpp_components_register_node(stereo_saver_component PLUGIN "slam::ImageSaver" EXECUTABLE stereo-saver-node)
 
 # 1. Instalar as bibliotecas dos componentes (ESSENCIAL para o Launch achar)
 install(TARGETS 
+  mono_component
+  mono_inertial_component
+  mono_compressed_component
+  mono_inertial_compressed_component
   stereo_slam_component 
   stereo_inertial_slam_component
   stereo_saver_component
@@ -155,7 +97,7 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
-install(TARGETS mono mono-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS mono mono-inertial mono-compressed mono-inertial-compressed DESTINATION lib/${PROJECT_NAME})
 # Install launch files.
 install(DIRECTORY launch config vocabulary
  DESTINATION share/${PROJECT_NAME}/)

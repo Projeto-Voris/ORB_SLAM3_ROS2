@@ -23,17 +23,22 @@ StereoInertialNode::StereoInertialNode(const rclcpp::NodeOptions & options) :
     RCLCPP_INFO(this->get_logger(), "Inicializando StereoInertialSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
-    this->declare_parameter<bool>("do_rectify", true);
-    this->declare_parameter<bool>("rescale", false);
+    this->declare_parameter<bool>("clahe", true);
+
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("rescale", rescale);
-    this->get_parameter("do_rectify", doRectify);
+    this->get_parameter("clahe", apply_clahe);
+
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
         RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
         rclcpp::shutdown();
         return;
+    }
+
+    if (apply_clahe){
+        clahe_->setClipLimit(2.0);
+        clahe_->setTilesGridSize(cv::Size(5, 5));
     }
 
     // ORB_SLAM3::System::STEREO = 1
@@ -81,25 +86,24 @@ void StereoInertialNode::GrabImageRight(const sensor_msgs::msg::Image::SharedPtr
 
 cv::Mat StereoInertialNode::GetImage(const sensor_msgs::msg::Image::SharedPtr msg)
 {
-    cv_bridge::CvImageConstPtr cv_ptr;
-    cv::Mat resized_img;
-    rescale = this->get_parameter("rescale").as_bool();
+    cv::Mat img;
+    double resize = this->get_parameter("resize_factor").as_double();
+
     try
     {
-        cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-        if (rescale){
-        cv::resize(cv_ptr->image, resized_img, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
+        img = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
+        cv::resize(img, img, cv::Size(), resize, resize, cv::INTER_LINEAR);
+        if(apply_clahe){
+            clahe_->apply(img, img);
         }
-        else{
-            resized_img = cv_ptr->image;
-        }
+
     }
     catch (cv_bridge::Exception &e)
     {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     }
 
-    return resized_img;
+    return img;
 }
 
 void StereoInertialNode::SyncWithImu()

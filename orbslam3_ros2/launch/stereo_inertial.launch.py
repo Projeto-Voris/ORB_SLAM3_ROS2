@@ -6,6 +6,7 @@ from launch_ros.descriptions import ComposableNode
 from launch_ros.actions import ComposableNodeContainer, Node, LoadComposableNodes
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
+import os
 
 def launch_setup(context, *args, **kwargs):
     composable_nodes = [
@@ -17,7 +18,6 @@ def launch_setup(context, *args, **kwargs):
                     parameters=[{
                         'voc_file': LaunchConfiguration('voc_file'),
                         'settings_file': LaunchConfiguration('settings_file'),
-                        'do_rectify': True,
                         'ENU_publish': True,
                         'tf_publish': False,
                         'resize_factor': 0.25,
@@ -74,9 +74,9 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument('left_image', default_value=['left/image_raw'], description='stereo left image'),
         DeclareLaunchArgument('right_image', default_value=['right/image_raw'], description='stereo right image'),
-        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+        DeclareLaunchArgument('voc_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
                   description='Caminho para o vocabulário ORB'),
-        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
+        DeclareLaunchArgument('settings_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
                   description='Caminho para o settings .yaml'),
 
     ])

@@ -9,29 +9,6 @@
 
 #include "System.h"
 
-using std::placeholders::_1;
-
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-
-    
-    auto node = std::make_shared<rclcpp::Node>("orb_slam");
-
-    rclcpp::NodeOptions options;
-    options.use_intra_process_comms(false); // Enable intra-process communication if saver is in the same process
-
-
-    // std::shared_ptr<MonoInertialNode> slam_ros;
-    auto slam_node = std::make_shared<orbslam3_ros2::MonoInertialNode>(options);
-    std::cout << "============================" << std::endl;
-
-    rclcpp::spin(slam_node);
-    rclcpp::shutdown();
-
-    return 0;
-}
 namespace orbslam3_ros2
 {
 MonoInertialNode::MonoInertialNode(const rclcpp::NodeOptions & options) :
@@ -40,18 +17,23 @@ MonoInertialNode::MonoInertialNode(const rclcpp::NodeOptions & options) :
     RCLCPP_INFO(this->get_logger(), "Inicializando CompressedSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
-    this->declare_parameter<bool>("do_rectify", true);
-    this->declare_parameter<bool>("rescale", false);
+    this->declare_parameter<bool>("clahe", false);
+    this->declare_parameter("resize_factor", 0.25);
+
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("rescale", rescale);
+    this->get_parameter("clahe", apply_clahe);
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
         RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
         rclcpp::shutdown();
         return;
     }
-
+    
+    if (apply_clahe){
+        clahe_->setClipLimit(2.0);
+        clahe_->setTilesGridSize(cv::Size(5, 5));
+    }
     // ORB_SLAM3::System::STEREO = 1
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::IMU_MONOCULAR, false);
     auto imu_qos_profile = rclcpp::SensorDataQoS();
@@ -59,8 +41,8 @@ MonoInertialNode::MonoInertialNode(const rclcpp::NodeOptions & options) :
     imu_qos_profile.keep_last(100);
     img_qos_profile.keep_last(10);
 
-    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", imu_qos_profile, std::bind(&MonoInertialNode::GrabImu, this, _1));
-    subImg_ = this->create_subscription<sensor_msgs::msg::Image>("camera", img_qos_profile, std::bind(&MonoInertialNode::GrabImage, this, _1));
+    subImu_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", imu_qos_profile, std::bind(&MonoInertialNode::GrabImu, this, std::placeholders::_1));
+    subImg_ = this->create_subscription<sensor_msgs::msg::Image>("camera", img_qos_profile, std::bind(&MonoInertialNode::GrabImage, this, std::placeholders::_1));
 
     syncThread_ = new std::thread(&MonoInertialNode::SyncWithImu, this);
 
@@ -98,28 +80,21 @@ void MonoInertialNode::GrabImage(const sensor_msgs::msg::Image::SharedPtr msgLef
 
 cv::Mat MonoInertialNode::GetImage(const sensor_msgs::msg::Image::SharedPtr msg)
 {
-    cv_bridge::CvImageConstPtr cv_ptr;
-    cv::Mat resized_img;
+    double resize = this->get_parameter("resize_factor").as_double();
+    cv::Mat img;
 
     try
     {
-        cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-        resized_img = cv_ptr->image;
-        // cv::resize(cv_ptr->image, resized_img, cv::Size(1920, 1080), cv::INTER_LINEAR);
+        img = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
+        cv::resize(img, img, cv::Size(), resize, resize, cv::INTER_LINEAR);
+        
+        if(apply_clahe){
+            clahe_->apply(img, img);
+        }
     }
     catch (cv_bridge::Exception &e)
     {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
-    }
-
-    if (cv_ptr->image.type() == 0)
-    {
-        return resized_img;
-    }
-    else
-    {
-        std::cerr << "Error image type" << std::endl;
-        return resized_img;
     }
 }
 
@@ -170,3 +145,4 @@ void MonoInertialNode::SyncWithImu()
     }
 }
 }
+RCLCPP_COMPONENTS_REGISTER_NODE(orbslam3_ros2::MonoInertialNode);
