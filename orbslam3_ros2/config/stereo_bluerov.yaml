@@ -5,7 +5,7 @@
 #--------------------------------------------------------------------------------------------
 File.version: "1.0"
 
-Camera.type: "PinHole"
+Camera.type: "Rectified"
 
 # --- Câmera 1 ---
 Camera1.fx: 314.56726
@@ -32,13 +32,13 @@ Camera2.p2: -0.00022523374
 Camera.width: 612
 Camera.height: 512
 
-Camera.fps: 60
+Camera.fps: 30
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 0
 
 Stereo.ThDepth: 60.0
-
+Stereo.b: 0.214986119164 # baseline times fx (metric units)
 # Transformation matrix from right camera to left camera
 Stereo.T_c1_c2: !!opencv-matrix
   rows: 4
@@ -48,6 +48,25 @@ Stereo.T_c1_c2: !!opencv-matrix
          -0.00261144224198, 0.999982791187, 0.00525335115088, 0.00072324448685, 
          0.00292452399452, -0.00524570945196, 0.999981964683, -0.00211062436419, 
          0.0, 0.0, 0.0, 1.0]
+
+
+# Transformation from body-frame (imu) to left camera
+# IMU.T_b_c1: !!opencv-matrix
+#   rows: 4
+#   cols: 4
+#   dt: f
+#   data: [0.01404455,  0.01139586,  0.99983643,  0.11460563,
+#         -0.99974561, -0.01748867,  0.01424261,  0.11436751,
+#         0.01764812, -0.99978212,  0.01114734, -0.22278693,
+#           0.,          0.,          0.,          1.,      ]
+
+
+# # IMU noise
+# IMU.NoiseGyro: 8.437606694181497e-05  # 0.000005148030141 # rad/s^0.5 
+# IMU.NoiseAcc: 0.0008621824075684253  # 0.000066952452471 # m/s^1.5
+# IMU.GyroWalk: 0.000000499999999 # rad/s^1.5
+# IMU.AccWalk: 2.0569571591853487e-06  # m/s^2.5
+# IMU.Frequency: 100
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

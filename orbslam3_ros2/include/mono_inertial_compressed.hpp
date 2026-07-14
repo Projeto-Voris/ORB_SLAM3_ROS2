@@ -50,7 +50,9 @@ private:
     // Image
     queue<sensor_msgs::msg::CompressedImage::SharedPtr> imgBuf_;
     std::mutex bufMutexImg_;
-    bool rescale;
+
+    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE();
+    bool apply_clahe {false};
 };
 }
 #endif

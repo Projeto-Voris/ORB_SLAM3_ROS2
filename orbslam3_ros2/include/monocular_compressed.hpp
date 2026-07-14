@@ -32,7 +32,8 @@ private:
 
     cv::Mat img_cam;
 
-    bool rescale;
+    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE();
+    bool apply_clahe {false};
 
     rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr m_image_subscriber;
 };

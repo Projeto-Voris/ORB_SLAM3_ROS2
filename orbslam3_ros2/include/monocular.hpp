@@ -12,7 +12,6 @@
 #include "Frame.h"
 #include "Map.h"
 #include "Tracking.h"
-
 #include "utility.hpp"
 
 #include "slam_node.hpp"
@@ -31,9 +30,8 @@ private:
 
     void GrabImage(const sensor_msgs::msg::Image::SharedPtr msg);
 
-    cv::Mat img_cam;
-
-    bool rescale;
+    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE();
+    bool apply_clahe {false};
 
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_subscriber;
 };

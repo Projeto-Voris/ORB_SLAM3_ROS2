@@ -9,26 +9,6 @@
 
 #include "System.h"
 
-using std::placeholders::_1;
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-
-    auto node = std::make_shared<rclcpp::Node>("run_slam_compressed");
-    rclcpp::NodeOptions options;
-    options.use_intra_process_comms(false); // Enable intra-process communication if saver is in the same process
-    // Create SLAM system
-    auto slam_node = std::make_shared<orbslam3_ros2::MonocularCompressedSlamNode>(options);
-    std::cout << "============================ " << std::endl;
-    
-    rclcpp::spin(slam_node);
-
-    rclcpp::shutdown();
-
-    return 0;
-}
-
 
 namespace orbslam3_ros2
 {
@@ -38,11 +18,12 @@ MonocularCompressedSlamNode::MonocularCompressedSlamNode(const rclcpp::NodeOptio
     RCLCPP_INFO(this->get_logger(), "Inicializando CompressedSlamNode...");
     this->declare_parameter<std::string>("voc_file", "");
     this->declare_parameter<std::string>("settings_file", "");
-    this->declare_parameter<bool>("do_rectify", true);
-    this->declare_parameter<bool>("rescale", false);
+    this->declare_parameter("resize_factor", 0.25);
+    this->declare_parameter<bool>("clahe", false);
+
     std::string strVocFile= this->get_parameter("voc_file").as_string();
     std::string strSettingsFile = this->get_parameter("settings_file").as_string(); 
-    this->get_parameter("rescale", rescale);
+    this->get_parameter("clahe", apply_clahe);
 
     if (strVocFile.empty() || strSettingsFile.empty()) {
         RCLCPP_ERROR(this->get_logger(), "Fill 'voc_file' and 'settings_file' parameters");
@@ -50,6 +31,10 @@ MonocularCompressedSlamNode::MonocularCompressedSlamNode(const rclcpp::NodeOptio
         return;
     }
 
+    if (apply_clahe){
+        clahe_->setClipLimit(2.0);
+        clahe_->setTilesGridSize(cv::Size(5, 5));
+    }
     // ORB_SLAM3::System::STEREO = 1
     m_SLAM = new ORB_SLAM3::System(strVocFile, strSettingsFile, ORB_SLAM3::System::MONOCULAR, false);
 
@@ -68,16 +53,14 @@ MonocularCompressedSlamNode::~MonocularCompressedSlamNode()
 void MonocularCompressedSlamNode::GrabImage(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
 {
     // Copy the ros compressed image message to cv::Mat.
-    rescale = this->get_parameter("rescale").as_bool();
+    double resize = this->get_parameter("resize_factor").as_double();
     cv::Mat img;
     try
     {
-        img_cam = cv_bridge::toCvCopy(msg, "bgr8")->image;
-        if(rescale){
-
-            cv::resize(img_cam, img, cv::Size(), 0.5, 0.5, cv::INTER_LINEAR);
-        } else {
-            img = img_cam;
+        img_cam = cv_bridge::toCvCopy(msg, "mono8")->image;
+        cv::resize(img_cam, img, cv::Size(), resize, resize, cv::INTER_LINEAR);
+        if(apply_clahe){
+            clahe_->apply(img, img);
         }
     }
     catch (cv_bridge::Exception& e)
@@ -93,3 +76,4 @@ void MonocularCompressedSlamNode::GrabImage(const sensor_msgs::msg::CompressedIm
     TrackedImage(img_cam);
 }
 }
+RCLCPP_COMPONENTS_REGISTER_NODE(orbslam3_ros2::MonocularCompressedSlamNode);

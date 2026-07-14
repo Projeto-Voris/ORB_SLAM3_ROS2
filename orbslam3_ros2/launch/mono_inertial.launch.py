@@ -3,6 +3,7 @@ from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
+import os
 
 def generate_launch_description():
     return LaunchDescription([
@@ -33,22 +34,20 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument('left_image', default_value=['left/image_raw'], description='stereo left image'),
         DeclareLaunchArgument('right_image', default_value=['right/image_raw'], description='stereo right image'),
-        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+        DeclareLaunchArgument('voc_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
                   description='Caminho para o vocabulário ORB'),
-        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
+        DeclareLaunchArgument('settings_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/bluerov_fpv.yaml', 
                   description='Caminho para o settings .yaml'),
     
         Node(
             package='orbslam3_ros2',
-            executable='mono-inertial',
+            executable='mono-inertial-node',
             name='mono_inertial_orbslam3',
             namespace=LaunchConfiguration('namespace'),
             output='screen',
             parameters=[{
                 'voc_file': LaunchConfiguration('voc_file'),
                 'settings_file': LaunchConfiguration('settings_file'),
-                'rescale': LaunchConfiguration('rescale'),
-                'do_rectify': True,
                 'ENU_publish': True,
                 'parent_frame_id': LaunchConfiguration('parent_frame_id'),
                 'child_frame_id': LaunchConfiguration('child_frame_id'),

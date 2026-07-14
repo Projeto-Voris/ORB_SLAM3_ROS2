@@ -3,7 +3,7 @@ from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
-
+import os
 def generate_launch_description():
     return LaunchDescription([
                 DeclareLaunchArgument(
@@ -33,13 +33,13 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument('left_image', default_value=['left/image_raw'], description='stereo left image'),
         DeclareLaunchArgument('right_image', default_value=['right/image_raw'], description='stereo right image'),
-        DeclareLaunchArgument('voc_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
+        DeclareLaunchArgument('voc_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/vocabulary/ORBvoc.txt', 
                   description='Caminho para o vocabulário ORB'),
-        DeclareLaunchArgument('settings_file', default_value='/home/jetson/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/lab_bw.yaml', 
+        DeclareLaunchArgument('settings_file', default_value=f'/home/{os.getenv("USER")}/ros2_ws/src/orbslam3_ros2/orbslam3_ros2/config/bluerov_fpv.yaml', 
                   description='Caminho para o settings .yaml'),
         Node(
             package='orbslam3_ros2',
-            executable='mono-compressed',
+            executable='mono-compressed-node',
             namespace=LaunchConfiguration('namespace'),
             name='mono_orbslam3',
             output='screen',

@@ -50,13 +50,11 @@ private:
     std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> right_sub;
     std::shared_ptr<message_filters::Synchronizer<approximate_sync_policy>> syncApproximate;
 
-    bool doRectify;
-    bool rescale;
-    // cv::Mat M1l, M2l, M1r, M2r;
-
-
     cv::Mat imLeft;
     cv::Mat imRight;
+
+    cv::Ptr<cv::CLAHE> clahe_ = cv::createCLAHE();
+    bool apply_clahe {false};
 
 
 };
